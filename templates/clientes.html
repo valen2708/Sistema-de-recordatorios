@@ -31,7 +31,10 @@
                     <td>{{ c.kg_comprados }} kg</td>
                     <td>{{ c.fecha_compra }}</td>
                     <td><span class="badge bg-success">{{ c.fecha_vencimiento }}</span></td>
-                    <td>
+                    <td class="d-flex gap-1">
+                        <form method="POST" action="/clientes/{{ c.id }}/enviar-recordatorio">
+                            <button class="btn btn-sm btn-success" title="Enviar recordatorio WhatsApp"><i class="bi bi-whatsapp"></i></button>
+                        </form>
                         <form method="POST" action="/clientes/{{ c.id }}/eliminar" onsubmit="return confirm('¿Eliminar a {{ c.nombre }}?')">
                             <button class="btn btn-sm btn-outline-danger"><i class="bi bi-trash"></i></button>
                         </form>

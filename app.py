@@ -155,6 +155,23 @@ def webhook_respuesta():
     return '<?xml version="1.0" encoding="UTF-8"?><Response></Response>', 200, {"Content-Type": "text/xml"}
 
 
+@app.route("/clientes/<int:cid>/enviar-recordatorio", methods=["POST"])
+def enviar_recordatorio_manual(cid):
+    conn = get_conn()
+    c = conn.execute("SELECT * FROM clientes WHERE id = ?", (cid,)).fetchone()
+    if c:
+        from whatsapp import enviar_recordatorio
+        sid = enviar_recordatorio(c["nombre"], c["telefono"], c["alimento"], c["id"])
+        conn.execute(
+            "INSERT INTO recordatorios (cliente_id, fecha_envio) VALUES (?, ?)",
+            (c["id"], datetime.today().strftime("%Y-%m-%d"))
+        )
+        conn.commit()
+        flash(f"Recordatorio enviado a {c['nombre']}. ID: {sid}", "success")
+    conn.close()
+    return redirect(url_for("clientes"))
+
+
 @app.route("/clientes/<int:cid>/eliminar", methods=["POST"])
 def eliminar_cliente(cid):
     conn = get_conn()
