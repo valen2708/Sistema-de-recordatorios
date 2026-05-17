@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-6">
+        <div class="card p-4">
+            <h5 class="fw-bold mb-4"><i class="bi bi-person-plus me-2"></i>Nuevo cliente</h5>
+            <form method="POST">
+                <div class="mb-3">
+                    <label class="form-label">Nombre del cliente</label>
+                    <input type="text" name="nombre" class="form-control" placeholder="Ej: Juan López" required>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Teléfono (con código de país, sin +)</label>
+                    <input type="text" name="telefono" class="form-control" placeholder="Ej: 5491155555555" required>
+                    <small class="text-muted">Argentina: 549 + código de área + número</small>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Alimento</label>
+                    <input type="text" name="alimento" class="form-control" placeholder="Ej: Royal Canin Adult 15kg" required>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Kg comprados</label>
+                    <input type="number" name="kg_comprados" class="form-control" step="0.5" min="1" placeholder="15" required>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Fecha de compra</label>
+                    <input type="date" name="fecha_compra" class="form-control" required>
+                </div>
+                <div class="mb-4">
+                    <label class="form-label">Consumo diario estimado (gramos/día)</label>
+                    <input type="number" name="gramos_por_dia" class="form-control" value="300" min="50" required>
+                    <small class="text-muted">Perro chico ~200g | mediano ~300g | grande ~450g | gato ~80g</small>
+                </div>
+                <div class="d-flex gap-2">
+                    <button type="submit" class="btn btn-success flex-fill">Guardar cliente</button>
+                    <a href="/clientes" class="btn btn-outline-secondary">Cancelar</a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

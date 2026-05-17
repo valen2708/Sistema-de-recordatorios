@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-7">
+        <div class="card p-4">
+            <h5 class="fw-bold mb-3"><i class="bi bi-file-earmark-excel me-2 text-success"></i>Cargar clientes desde Excel</h5>
+
+            <div class="alert alert-info mb-4">
+                <strong>Formato requerido del Excel:</strong>
+                <table class="table table-sm table-bordered mt-2 mb-0 bg-white">
+                    <thead class="table-light">
+                        <tr><th>nombre</th><th>telefono</th><th>alimento</th><th>kg_comprados</th><th>fecha_compra</th></tr>
+                    </thead>
+                    <tbody>
+                        <tr><td>Juan López</td><td>5491155555555</td><td>Royal Canin 15kg</td><td>15</td><td>17/05/2026</td></tr>
+                    </tbody>
+                </table>
+                <small class="text-muted">Los nombres de columna deben ser exactamente esos (en minúscula).</small>
+            </div>
+
+            <form method="POST" enctype="multipart/form-data">
+                <div class="mb-3">
+                    <label class="form-label">Archivo Excel (.xlsx o .xls)</label>
+                    <input type="file" name="archivo" class="form-control" accept=".xlsx,.xls" required>
+                </div>
+                <div class="mb-4">
+                    <label class="form-label">Consumo diario por defecto (gramos/día)</label>
+                    <input type="number" name="gramos_por_dia" class="form-control" value="300" min="50">
+                    <small class="text-muted">Se aplicará a todos los clientes del Excel. Podés editarlos después individualmente.</small>
+                </div>
+                <div class="d-flex gap-2">
+                    <button type="submit" class="btn btn-success flex-fill">Cargar clientes</button>
+                    <a href="/clientes" class="btn btn-outline-secondary">Cancelar</a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
