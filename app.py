@@ -1,4 +1,5 @@
-from flask import Flask, render_template, request, redirect, url_for, flash
+from flask import Flask, render_template, request, redirect, url_for, flash, session
+from functools import wraps
 from database import init_db, get_conn, calcular_fecha_vencimiento
 from scheduler import iniciar_scheduler
 import pandas as pd
@@ -7,8 +8,36 @@ from datetime import datetime
 app = Flask(__name__)
 app.secret_key = "petshop-secret-2024"
 
+PASSWORD = "0804"
+
+
+def login_required(f):
+    @wraps(f)
+    def decorated(*args, **kwargs):
+        if not session.get("logged_in"):
+            return redirect(url_for("login"))
+        return f(*args, **kwargs)
+    return decorated
+
+
+@app.route("/login", methods=["GET", "POST"])
+def login():
+    if request.method == "POST":
+        if request.form.get("password") == PASSWORD:
+            session["logged_in"] = True
+            return redirect(url_for("dashboard"))
+        flash("Contraseña incorrecta.", "danger")
+    return render_template("login.html")
+
+
+@app.route("/logout")
+def logout():
+    session.clear()
+    return redirect(url_for("login"))
+
 
 @app.route("/")
+@login_required
 def dashboard():
     conn = get_conn()
     from datetime import timedelta
@@ -33,6 +62,7 @@ def dashboard():
 
 
 @app.route("/clientes")
+@login_required
 def clientes():
     conn = get_conn()
     lista = conn.execute("SELECT * FROM clientes WHERE activo = 1 ORDER BY nombre").fetchall()
@@ -41,6 +71,7 @@ def clientes():
 
 
 @app.route("/clientes/nuevo", methods=["GET", "POST"])
+@login_required
 def nuevo_cliente():
     if request.method == "POST":
         nombre = request.form["nombre"]
@@ -66,6 +97,7 @@ def nuevo_cliente():
 
 
 @app.route("/clientes/cargar-excel", methods=["GET", "POST"])
+@login_required
 def cargar_excel():
     if request.method == "POST":
         archivo = request.files.get("archivo")
@@ -105,6 +137,7 @@ def cargar_excel():
 
 
 @app.route("/recordatorios")
+@login_required
 def recordatorios():
     conn = get_conn()
     lista = conn.execute("""
@@ -156,6 +189,7 @@ def webhook_respuesta():
 
 
 @app.route("/clientes/<int:cid>/enviar-recordatorio", methods=["POST"])
+@login_required
 def enviar_recordatorio_manual(cid):
     conn = get_conn()
     c = conn.execute("SELECT * FROM clientes WHERE id = ?", (cid,)).fetchone()
@@ -173,6 +207,7 @@ def enviar_recordatorio_manual(cid):
 
 
 @app.route("/clientes/<int:cid>/eliminar", methods=["POST"])
+@login_required
 def eliminar_cliente(cid):
     conn = get_conn()
     conn.execute("UPDATE clientes SET activo = 0 WHERE id = ?", (cid,))
