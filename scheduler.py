@@ -1,4 +1,4 @@
-from apscheduler.schedulers.background import BackgroundScheduler
+import os
 from datetime import datetime, timedelta
 from database import get_conn
 from whatsapp import enviar_recordatorio
@@ -23,7 +23,6 @@ def revisar_vencimientos():
             continue
 
         sid = enviar_recordatorio(c["nombre"], c["telefono"], c["alimento"], c["id"])
-
         conn.execute(
             "INSERT INTO recordatorios (cliente_id, fecha_envio) VALUES (?, ?)",
             (c["id"], datetime.today().strftime("%Y-%m-%d"))
@@ -35,6 +34,7 @@ def revisar_vencimientos():
 
 
 def iniciar_scheduler():
+    from apscheduler.schedulers.background import BackgroundScheduler
     scheduler = BackgroundScheduler()
     scheduler.add_job(revisar_vencimientos, "cron", hour=9, minute=0)
     scheduler.start()

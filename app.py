@@ -1,3 +1,4 @@
+import os
 from flask import Flask, render_template, request, redirect, url_for, flash, session
 from functools import wraps
 from database import init_db, get_conn, calcular_fecha_vencimiento
@@ -218,7 +219,18 @@ def eliminar_cliente(cid):
     return redirect(url_for("clientes"))
 
 
+@app.route("/api/check-reminders", methods=["POST"])
+def check_reminders():
+    secret = os.environ.get("SCHEDULER_SECRET", "")
+    if not secret or request.form.get("secret") != secret:
+        return "Unauthorized", 401
+    from scheduler import revisar_vencimientos
+    revisar_vencimientos()
+    return "OK", 200
+
+
 if __name__ == "__main__":
     init_db()
-    iniciar_scheduler()
+    if not os.environ.get("DATABASE_URL"):
+        iniciar_scheduler()
     app.run(debug=True, port=5000)

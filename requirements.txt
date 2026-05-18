@@ -3,3 +3,5 @@ pandas
 openpyxl
 twilio
 apscheduler
+gunicorn
+psycopg2-binary
