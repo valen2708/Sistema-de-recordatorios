@@ -2,28 +2,9 @@ services:
   - type: web
     name: pistas-de-blue
     runtime: python
+    plan: free
     buildCommand: pip install -r requirements.txt
     startCommand: gunicorn app:app -c gunicorn_config.py
-    envVars:
-      - key: DATABASE_URL
-        fromDatabase:
-          name: pistas-de-blue-db
-          property: connectionString
-      - key: TWILIO_ACCOUNT_SID
-        sync: false
-      - key: TWILIO_AUTH_TOKEN
-        sync: false
-      - key: TWILIO_WHATSAPP_FROM
-        value: whatsapp:+14155238886
-      - key: SCHEDULER_SECRET
-        generateValue: true
-
-  - type: cron
-    name: pistas-de-blue-scheduler
-    runtime: python
-    schedule: "0 12 * * *"
-    buildCommand: pip install -r requirements.txt
-    startCommand: python -c "from scheduler import revisar_vencimientos; revisar_vencimientos()"
     envVars:
       - key: DATABASE_URL
         fromDatabase:
