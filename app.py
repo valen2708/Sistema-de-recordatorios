@@ -116,11 +116,12 @@ def cargar_excel():
             for _, row in df.iterrows():
                 fecha_str = pd.to_datetime(row["fecha_compra"]).strftime("%Y-%m-%d")
                 kg = float(row["kg_comprados"])
-                fecha_venc = calcular_fecha_vencimiento(fecha_str, kg, gramos)
+                gramos_cliente = float(row["gramos_por_dia"]) if "gramos_por_dia" in row and pd.notna(row["gramos_por_dia"]) else gramos
+                fecha_venc = calcular_fecha_vencimiento(fecha_str, kg, gramos_cliente)
 
                 conn.execute(
                     "INSERT INTO clientes (nombre, telefono, alimento, kg_comprados, fecha_compra, gramos_por_dia, fecha_vencimiento) VALUES (?,?,?,?,?,?,?)",
-                    (str(row["nombre"]), str(row["telefono"]), str(row["alimento"]), kg, fecha_str, gramos, fecha_venc)
+                    (str(row["nombre"]), str(row["telefono"]), str(row["alimento"]), kg, fecha_str, gramos_cliente, fecha_venc)
                 )
                 agregados += 1
 

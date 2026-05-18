@@ -9,13 +9,13 @@
                 <strong>Formato requerido del Excel:</strong>
                 <table class="table table-sm table-bordered mt-2 mb-0 bg-white">
                     <thead class="table-light">
-                        <tr><th>nombre</th><th>telefono</th><th>alimento</th><th>kg_comprados</th><th>fecha_compra</th></tr>
+                        <tr><th>nombre</th><th>telefono</th><th>alimento</th><th>kg_comprados</th><th>fecha_compra</th><th>gramos_por_dia</th></tr>
                     </thead>
                     <tbody>
-                        <tr><td>Juan López</td><td>5491155555555</td><td>Royal Canin 15kg</td><td>15</td><td>17/05/2026</td></tr>
+                        <tr><td>Juan López</td><td>5491155555555</td><td>Royal Canin 15kg</td><td>15</td><td>17/05/2026</td><td>300</td></tr>
                     </tbody>
                 </table>
-                <small class="text-muted">Los nombres de columna deben ser exactamente esos (en minúscula).</small>
+                <small class="text-muted">Los nombres de columna deben ser exactamente esos (en minúscula). La columna <strong>gramos_por_dia</strong> es opcional — si no está, se usa el valor por defecto de abajo.</small>
             </div>
 
             <form method="POST" enctype="multipart/form-data">
