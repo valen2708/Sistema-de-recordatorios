@@ -3,6 +3,7 @@ from flask import Flask, render_template, request, redirect, url_for, flash, ses
 from functools import wraps
 from database import init_db, get_conn, calcular_fecha_vencimiento
 from scheduler import iniciar_scheduler
+from whatsapp import get_estado_conexion
 import pandas as pd
 from datetime import datetime
 
@@ -55,11 +56,16 @@ def dashboard():
     respondieron_si = conn.execute("SELECT COUNT(*) FROM recordatorios WHERE respuesta = 'SI'").fetchone()[0]
     conn.close()
 
+    wa_status = get_estado_conexion()
+    wa_server = os.environ.get("WA_SERVER_URL", "http://localhost:3000")
+
     return render_template("dashboard.html",
                            por_vencer=por_vencer,
                            total_clientes=total_clientes,
                            total_recordatorios=total_recordatorios,
-                           respondieron_si=respondieron_si)
+                           respondieron_si=respondieron_si,
+                           wa_status=wa_status,
+                           wa_qr_url=f"{wa_server}/qr")
 
 
 @app.route("/clientes")

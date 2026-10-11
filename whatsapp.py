@@ -1,29 +1,45 @@
-from twilio.rest import Client
 import os
+import requests
 
-ACCOUNT_SID = os.environ.get("TWILIO_ACCOUNT_SID", "")
-AUTH_TOKEN = os.environ.get("TWILIO_AUTH_TOKEN", "")
-TWILIO_WHATSAPP_FROM = os.environ.get("TWILIO_WHATSAPP_FROM", "whatsapp:+14155238886")
+WA_SERVER = os.environ.get("WA_SERVER_URL", "http://localhost:3000")
 
 
-def enviar_recordatorio(nombre, telefono, alimento, cliente_id):
-    if not ACCOUNT_SID or not AUTH_TOKEN:
-        print(f"[SIMULADO] Recordatorio para {nombre} ({telefono}) - {alimento}")
-        return "simulado"
-
-    client = Client(ACCOUNT_SID, AUTH_TOKEN)
-    numero_destino = f"whatsapp:+{telefono.strip().replace('+', '').replace(' ', '')}"
-
-    mensaje = (
+def _armar_mensaje(nombre, alimento):
+    return (
         f"Hola {nombre}! 🐾\n\n"
         f"Mañana se termina el alimento *{alimento}* de tu mascota.\n\n"
         f"¿Querés que te enviemos más?\n"
         f"Respondé *SI* o *NO*"
     )
 
-    msg = client.messages.create(
-        from_=TWILIO_WHATSAPP_FROM,
-        to=numero_destino,
-        body=mensaje
-    )
-    return msg.sid
+
+def enviar_recordatorio(nombre, telefono, alimento, cliente_id):
+    mensaje = _armar_mensaje(nombre, alimento)
+    try:
+        r = requests.post(
+            f"{WA_SERVER}/send",
+            json={"telefono": telefono, "mensaje": mensaje},
+            timeout=10
+        )
+        data = r.json()
+        if data.get("ok"):
+            print(f"[WA] Enviado a {nombre} ({telefono})")
+            return "enviado"
+        else:
+            print(f"[WA] Error al enviar a {nombre}: {data.get('error')}")
+            return f"error: {data.get('error')}"
+    except requests.exceptions.ConnectionError:
+        print(f"[WA] No se pudo conectar al servidor WhatsApp. ¿Está corriendo?")
+        return "error: servidor no disponible"
+    except Exception as e:
+        print(f"[WA] Error inesperado: {e}")
+        return f"error: {e}"
+
+
+def get_estado_conexion():
+    """Devuelve el estado del servidor WhatsApp para mostrarlo en el dashboard."""
+    try:
+        r = requests.get(f"{WA_SERVER}/status", timeout=3)
+        return r.json()
+    except Exception:
+        return {"connected": False, "has_qr": False, "server_down": True}

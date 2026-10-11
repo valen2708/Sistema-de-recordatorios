@@ -1,35 +1,67 @@
 # Sistema de Recordatorios - PetShop
 
-## Instalación (primera vez)
+## Requisitos previos
 
-Abrí el `cmd` en la carpeta del proyecto y ejecutá:
+- Python 3.8+
+- Node.js 16+
+
+---
+
+## Instalación
+
+### 1. Dependencias Python
 
 ```
 pip install -r requirements.txt
 ```
 
-## Configurar Twilio (para WhatsApp real)
-
-1. Creá una cuenta gratuita en https://www.twilio.com
-2. Activá el sandbox de WhatsApp en: Console > Messaging > Try it out > Send a WhatsApp message
-3. Desde tu celular, mandá el código que te dan al número de Twilio por WhatsApp
-4. Copiá tu Account SID y Auth Token del dashboard
-5. Antes de correr el sistema, ejecutá en cmd:
+### 2. Dependencias del servidor WhatsApp (Node)
 
 ```
-set TWILIO_ACCOUNT_SID=ACxxxxxxxxxxxxxxxx
-set TWILIO_AUTH_TOKEN=xxxxxxxxxxxxxxxx
+cd whatsapp_server
+npm install
 ```
 
-**Sin configurar Twilio**, el sistema igual funciona pero solo simula los envíos (los muestra en consola).
+---
 
 ## Correr el sistema
+
+Necesitás abrir **dos terminales**:
+
+### Terminal 1 — Servidor WhatsApp
+
+```
+cd whatsapp_server
+node index.js
+```
+
+La primera vez, abrí el navegador en: **http://localhost:3000/qr**
+
+Escaneá el QR con el celular del local:
+- Abrí WhatsApp → Dispositivos vinculados → Vincular dispositivo
+- Apuntá la cámara al QR
+
+La sesión queda guardada. La próxima vez no hace falta escanear de nuevo.
+
+### Terminal 2 — Sistema web (Flask)
 
 ```
 python app.py
 ```
 
-Luego abrí el navegador en: http://localhost:5000
+Abrí el navegador en: **http://localhost:5000**
+
+---
+
+## Cómo funciona
+
+1. Cargás clientes con su alimento, kg comprados y fecha de compra
+2. El sistema calcula automáticamente cuándo se termina el alimento
+3. En el Dashboard ves los clientes que vencen en los próximos 7 días
+4. Apretás el botón **Enviar** → sale el WhatsApp desde el número del local
+5. El cliente responde SI o NO (se registra automáticamente si usás el webhook)
+
+---
 
 ## Formato del Excel para cargar clientes
 
@@ -40,10 +72,12 @@ Luego abrí el navegador en: http://localhost:5000
 - **telefono**: sin espacios ni +, con código de país (Argentina = 549 + número)
 - **fecha_compra**: formato DD/MM/YYYY o YYYY-MM-DD
 
-## Cómo funciona
+---
 
-1. Cargás clientes con su alimento, kg comprados y fecha de compra
-2. El sistema calcula automáticamente cuándo se termina el alimento
-3. Todos los días a las 9am revisa si algún cliente se queda sin alimento al día siguiente
-4. Si es así, le manda un WhatsApp preguntando si quiere pedir más
-5. Cuando el cliente responde SI, se registra la nueva compra y se reinicia el ciclo
+## Variables de entorno opcionales
+
+| Variable | Default | Descripción |
+|----------|---------|-------------|
+| `WA_SERVER_URL` | `http://localhost:3000` | URL del servidor WhatsApp Node |
+| `WA_PORT` | `3000` | Puerto del servidor Node |
+| `DATABASE_URL` | (vacío = SQLite local) | PostgreSQL para producción |

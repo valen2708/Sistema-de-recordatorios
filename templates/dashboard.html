@@ -2,6 +2,21 @@
 {% block content %}
 <h4 class="mb-4 fw-bold">Dashboard</h4>
 
+{# ── Estado WhatsApp ── #}
+<div class="card p-3 mb-4 d-flex flex-row align-items-center gap-3">
+    {% if wa_status.server_down %}
+        <span class="badge bg-danger fs-6">⚠️ Servidor WhatsApp offline</span>
+        <span class="text-muted small">Iniciá el servidor Node para poder enviar mensajes.</span>
+    {% elif wa_status.connected %}
+        <span class="badge bg-success fs-6">✅ WhatsApp conectado</span>
+        <span class="text-muted small">El número del local está activo y listo para enviar.</span>
+    {% else %}
+        <span class="badge bg-warning text-dark fs-6">📱 WhatsApp desconectado</span>
+        <a href="{{ wa_qr_url }}" target="_blank" class="btn btn-sm btn-warning">Escanear QR para conectar</a>
+    {% endif %}
+</div>
+
+{# ── Tarjetas de stats ── #}
 <div class="row g-3 mb-4">
     <div class="col-md-4">
         <div class="card p-3 text-center">
@@ -23,8 +38,12 @@
     </div>
 </div>
 
+{# ── Tabla por vencer ── #}
 <div class="card p-4">
-    <h5 class="fw-bold mb-3"><i class="bi bi-exclamation-triangle-fill text-warning me-2"></i>Alimentos que vencen en los próximos 7 días</h5>
+    <h5 class="fw-bold mb-3">
+        <i class="bi bi-exclamation-triangle-fill text-warning me-2"></i>
+        Alimentos que vencen en los próximos 7 días
+    </h5>
     {% if por_vencer %}
     <div class="table-responsive">
         <table class="table table-hover align-middle">
@@ -35,6 +54,7 @@
                     <th>Alimento</th>
                     <th>Kg</th>
                     <th>Vence</th>
+                    <th></th>
                 </tr>
             </thead>
             <tbody>
@@ -46,6 +66,16 @@
                     <td>{{ c.kg_comprados }} kg</td>
                     <td>
                         <span class="badge bg-warning text-dark">{{ c.fecha_vencimiento }}</span>
+                    </td>
+                    <td>
+                        <form method="POST" action="/clientes/{{ c.id }}/enviar-recordatorio">
+                            <button
+                                class="btn btn-sm btn-success"
+                                title="Enviar recordatorio por WhatsApp"
+                                {% if not wa_status.connected %}disabled{% endif %}>
+                                <i class="bi bi-whatsapp me-1"></i>Enviar
+                            </button>
+                        </form>
                     </td>
                 </tr>
                 {% endfor %}
