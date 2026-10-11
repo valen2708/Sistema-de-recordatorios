@@ -3,16 +3,22 @@
 <h4 class="mb-4 fw-bold">Dashboard</h4>
 
 {# ── Estado WhatsApp ── #}
-<div class="card p-3 mb-4 d-flex flex-row align-items-center gap-3">
-    {% if wa_status.server_down %}
-        <span class="badge bg-danger fs-6">⚠️ Servidor WhatsApp offline</span>
-        <span class="text-muted small">Iniciá el servidor Node para poder enviar mensajes.</span>
+<div class="card p-3 mb-4 d-flex flex-row align-items-center gap-3 flex-wrap">
+    {% if wa_status.no_config %}
+        <span class="badge bg-secondary fs-6">⚙️ WhatsApp no configurado</span>
+        <span class="text-muted small">Configurá las variables GREENAPI_INSTANCE y GREENAPI_TOKEN en Render.</span>
+    {% elif wa_status.error %}
+        <span class="badge bg-danger fs-6">⚠️ Error al verificar WhatsApp</span>
     {% elif wa_status.connected %}
         <span class="badge bg-success fs-6">✅ WhatsApp conectado</span>
         <span class="text-muted small">El número del local está activo y listo para enviar.</span>
     {% else %}
         <span class="badge bg-warning text-dark fs-6">📱 WhatsApp desconectado</span>
-        <a href="{{ wa_qr_url }}" target="_blank" class="btn btn-sm btn-warning">Escanear QR para conectar</a>
+        <span class="text-muted small">
+            Entrá a
+            <a href="https://console.green-api.com" target="_blank">green-api.com</a>,
+            abrí tu instancia y escaneá el QR con el celular del local.
+        </span>
     {% endif %}
 </div>
 

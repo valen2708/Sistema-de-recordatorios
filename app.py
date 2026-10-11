@@ -57,15 +57,13 @@ def dashboard():
     conn.close()
 
     wa_status = get_estado_conexion()
-    wa_server = os.environ.get("WA_SERVER_URL", "http://localhost:3000")
 
     return render_template("dashboard.html",
                            por_vencer=por_vencer,
                            total_clientes=total_clientes,
                            total_recordatorios=total_recordatorios,
                            respondieron_si=respondieron_si,
-                           wa_status=wa_status,
-                           wa_qr_url=f"{wa_server}/qr")
+                           wa_status=wa_status)
 
 
 @app.route("/clientes")

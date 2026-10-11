@@ -1,7 +1,10 @@
 import os
 import requests
 
-WA_SERVER = os.environ.get("WA_SERVER_URL", "http://localhost:3000")
+# Green API - credenciales desde variables de entorno
+GREENAPI_INSTANCE = os.environ.get("GREENAPI_INSTANCE", "")
+GREENAPI_TOKEN = os.environ.get("GREENAPI_TOKEN", "")
+GREENAPI_URL = "https://api.green-api.com"
 
 
 def _armar_mensaje(nombre, alimento):
@@ -14,32 +17,50 @@ def _armar_mensaje(nombre, alimento):
 
 
 def enviar_recordatorio(nombre, telefono, alimento, cliente_id):
+    if not GREENAPI_INSTANCE or not GREENAPI_TOKEN:
+        print(f"[SIMULADO] Recordatorio para {nombre} ({telefono}) - {alimento}")
+        return "simulado"
+
     mensaje = _armar_mensaje(nombre, alimento)
+
+    # Formato Green API: código de país + número + @c.us (sin +)
+    numero = telefono.strip().replace("+", "").replace(" ", "") + "@c.us"
+
+    url = f"{GREENAPI_URL}/waInstance{GREENAPI_INSTANCE}/sendMessage/{GREENAPI_TOKEN}"
+
     try:
-        r = requests.post(
-            f"{WA_SERVER}/send",
-            json={"telefono": telefono, "mensaje": mensaje},
-            timeout=10
-        )
+        r = requests.post(url, json={
+            "chatId": numero,
+            "message": mensaje
+        }, timeout=10)
+
         data = r.json()
-        if data.get("ok"):
-            print(f"[WA] Enviado a {nombre} ({telefono})")
-            return "enviado"
+        if data.get("idMessage"):
+            print(f"[WA] Enviado a {nombre} ({telefono}) - ID: {data['idMessage']}")
+            return data["idMessage"]
         else:
-            print(f"[WA] Error al enviar a {nombre}: {data.get('error')}")
-            return f"error: {data.get('error')}"
-    except requests.exceptions.ConnectionError:
-        print(f"[WA] No se pudo conectar al servidor WhatsApp. ¿Está corriendo?")
-        return "error: servidor no disponible"
+            print(f"[WA] Error al enviar a {nombre}: {data}")
+            return f"error: {data}"
+
     except Exception as e:
         print(f"[WA] Error inesperado: {e}")
         return f"error: {e}"
 
 
 def get_estado_conexion():
-    """Devuelve el estado del servidor WhatsApp para mostrarlo en el dashboard."""
+    """Verifica si la instancia de Green API está conectada."""
+    if not GREENAPI_INSTANCE or not GREENAPI_TOKEN:
+        return {"connected": False, "no_config": True}
+
     try:
-        r = requests.get(f"{WA_SERVER}/status", timeout=3)
-        return r.json()
+        url = f"{GREENAPI_URL}/waInstance{GREENAPI_INSTANCE}/getStateInstance/{GREENAPI_TOKEN}"
+        r = requests.get(url, timeout=5)
+        data = r.json()
+        estado = data.get("stateInstance", "")
+        return {
+            "connected": estado == "authorized",
+            "estado": estado,
+            "no_config": False
+        }
     except Exception:
-        return {"connected": False, "has_qr": False, "server_down": True}
+        return {"connected": False, "no_config": False, "error": True}

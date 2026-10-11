@@ -1,65 +1,38 @@
 # Sistema de Recordatorios - PetShop
 
-## Requisitos previos
-
-- Python 3.8+
-- Node.js 16+
-
----
-
-## Instalación
-
-### 1. Dependencias Python
-
-```
-pip install -r requirements.txt
-```
-
-### 2. Dependencias del servidor WhatsApp (Node)
-
-```
-cd whatsapp_server
-npm install
-```
-
----
-
-## Correr el sistema
-
-Necesitás abrir **dos terminales**:
-
-### Terminal 1 — Servidor WhatsApp
-
-```
-cd whatsapp_server
-node index.js
-```
-
-La primera vez, abrí el navegador en: **http://localhost:3000/qr**
-
-Escaneá el QR con el celular del local:
-- Abrí WhatsApp → Dispositivos vinculados → Vincular dispositivo
-- Apuntá la cámara al QR
-
-La sesión queda guardada. La próxima vez no hace falta escanear de nuevo.
-
-### Terminal 2 — Sistema web (Flask)
-
-```
-python app.py
-```
-
-Abrí el navegador en: **http://localhost:5000**
-
----
-
 ## Cómo funciona
 
 1. Cargás clientes con su alimento, kg comprados y fecha de compra
-2. El sistema calcula automáticamente cuándo se termina el alimento
-3. En el Dashboard ves los clientes que vencen en los próximos 7 días
-4. Apretás el botón **Enviar** → sale el WhatsApp desde el número del local
-5. El cliente responde SI o NO (se registra automáticamente si usás el webhook)
+2. El sistema calcula cuándo se termina el alimento
+3. Todos los días a las 9am revisa y manda recordatorios automáticos por WhatsApp
+4. Los mensajes salen desde el número del local
+5. El cliente responde SI o NO — si dice SI, se reinicia el ciclo automáticamente
+
+---
+
+## Configurar Green API (WhatsApp gratuito)
+
+Green API permite mandar mensajes desde el número del local sin costo.
+
+1. Entrá a **https://green-api.com** y creá una cuenta gratis
+2. Creá una nueva instancia
+3. En el panel de la instancia, hacé clic en **"Escanear QR"**
+4. Abrí WhatsApp en el celular del local → Dispositivos vinculados → Vincular dispositivo → escanear
+5. Copiá el **ID de instancia** y el **API Token**
+
+---
+
+## Deploy en Render
+
+1. Subí el repo a GitHub (ya está)
+2. Entrá a **https://render.com** y creá una cuenta
+3. New → Blueprint → conectá tu repo → Render lee el `render.yaml` automáticamente
+4. Una vez creado el servicio, andá a **Environment** y completá:
+   - `GREENAPI_INSTANCE` → el ID de instancia de Green API
+   - `GREENAPI_TOKEN` → el token de Green API
+5. Redeploy y listo
+
+La URL del sistema va a ser algo como: `https://petshop-recordatorios.onrender.com`
 
 ---
 
@@ -74,10 +47,9 @@ Abrí el navegador en: **http://localhost:5000**
 
 ---
 
-## Variables de entorno opcionales
+## Contraseña de acceso
 
-| Variable | Default | Descripción |
-|----------|---------|-------------|
-| `WA_SERVER_URL` | `http://localhost:3000` | URL del servidor WhatsApp Node |
-| `WA_PORT` | `3000` | Puerto del servidor Node |
-| `DATABASE_URL` | (vacío = SQLite local) | PostgreSQL para producción |
+La contraseña por defecto es `0804`. Para cambiarla, editá la línea en `app.py`:
+```python
+PASSWORD = "0804"
+```
