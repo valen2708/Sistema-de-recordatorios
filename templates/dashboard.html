@@ -74,7 +74,7 @@
                         <span class="badge bg-warning text-dark">{{ c.fecha_vencimiento }}</span>
                     </td>
                     <td>
-                        <form method="POST" action="/clientes/{{ c.id }}/enviar-recordatorio">
+                        <form method="POST" action="/ventas/{{ c.id }}/enviar-recordatorio">
                             <button
                                 class="btn btn-sm btn-success"
                                 title="Enviar recordatorio por WhatsApp"

@@ -2,10 +2,7 @@
 {% block content %}
 <div class="d-flex justify-content-between align-items-center mb-4">
     <h4 class="fw-bold mb-0">Clientes</h4>
-    <div>
-        <a href="/clientes/cargar-excel" class="btn btn-outline-success me-2"><i class="bi bi-file-earmark-excel me-1"></i>Cargar Excel</a>
-        <a href="/clientes/nuevo" class="btn btn-success"><i class="bi bi-plus-circle me-1"></i>Nuevo cliente</a>
-    </div>
+    <a href="/clientes/nuevo" class="btn btn-success"><i class="bi bi-plus-circle me-1"></i>Nuevo cliente</a>
 </div>
 
 <div class="card">
@@ -15,10 +12,6 @@
                 <tr>
                     <th>Nombre</th>
                     <th>Teléfono</th>
-                    <th>Alimento</th>
-                    <th>Kg</th>
-                    <th>Compra</th>
-                    <th>Vence</th>
                     <th></th>
                 </tr>
             </thead>
@@ -27,22 +20,18 @@
                 <tr>
                     <td><strong>{{ c.nombre }}</strong></td>
                     <td>{{ c.telefono }}</td>
-                    <td>{{ c.alimento }}</td>
-                    <td>{{ c.kg_comprados }} kg</td>
-                    <td>{{ c.fecha_compra }}</td>
-                    <td><span class="badge bg-success">{{ c.fecha_vencimiento }}</span></td>
-                    <td class="d-flex gap-1">
-                        <form method="POST" action="/clientes/{{ c.id }}/enviar-recordatorio">
-                            <button class="btn btn-sm btn-success" title="Enviar recordatorio WhatsApp"><i class="bi bi-whatsapp"></i></button>
-                        </form>
-                        <form method="POST" action="/clientes/{{ c.id }}/eliminar" onsubmit="return confirm('¿Eliminar a {{ c.nombre }}?')">
+                    <td class="text-end">
+                        <a href="/ventas/nueva?cliente_id={{ c.id }}&nombre={{ c.nombre }}" class="btn btn-sm btn-outline-success me-1">
+                            <i class="bi bi-cart-plus me-1"></i>Nueva venta
+                        </a>
+                        <form method="POST" action="/clientes/{{ c.id }}/eliminar" class="d-inline" onsubmit="return confirm('¿Eliminar a {{ c.nombre }}? También se eliminarán sus ventas.')">
                             <button class="btn btn-sm btn-outline-danger"><i class="bi bi-trash"></i></button>
                         </form>
                     </td>
                 </tr>
                 {% endfor %}
                 {% if not clientes %}
-                <tr><td colspan="7" class="text-center text-muted py-4">No hay clientes cargados aún.</td></tr>
+                <tr><td colspan="3" class="text-center text-muted py-4">No hay clientes cargados aún.</td></tr>
                 {% endif %}
             </tbody>
         </table>

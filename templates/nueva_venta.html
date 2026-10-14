@@ -1,0 +1,102 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h4 class="fw-bold mb-0">Nueva Venta</h4>
+    <a href="/ventas" class="btn btn-outline-secondary"><i class="bi bi-arrow-left me-1"></i>Volver</a>
+</div>
+
+<div class="card p-4" style="max-width: 550px;">
+    <form method="POST" action="/ventas/nueva">
+        <div class="mb-3">
+            <label class="form-label fw-semibold">Cliente</label>
+            <input type="text" id="buscar-cliente" class="form-control" placeholder="Escribí el nombre o teléfono..." autocomplete="off">
+            <input type="hidden" name="cliente_id" id="cliente_id" required>
+            <div id="resultados-busqueda" class="list-group mt-1" style="position:absolute; z-index:1000; width: calc(100% - 2rem);"></div>
+            <div id="cliente-seleccionado" class="mt-2 text-success fw-semibold" style="display:none;"></div>
+        </div>
+
+        <div class="mb-3">
+            <label class="form-label fw-semibold">Alimento</label>
+            <input type="text" name="alimento" class="form-control" placeholder="Ej: Royal Canin Adult 15kg" required>
+        </div>
+
+        <div class="row g-3 mb-3">
+            <div class="col-6">
+                <label class="form-label fw-semibold">Kg comprados</label>
+                <input type="number" name="kg_comprados" class="form-control" step="0.5" min="0.5" placeholder="Ej: 15" required>
+            </div>
+            <div class="col-6">
+                <label class="form-label fw-semibold">Gramos por día</label>
+                <input type="number" name="gramos_por_dia" class="form-control" step="10" min="10" placeholder="Ej: 300" required>
+            </div>
+        </div>
+
+        <div class="mb-4">
+            <label class="form-label fw-semibold">Fecha de compra</label>
+            <input type="date" name="fecha_compra" class="form-control" required>
+        </div>
+
+        <button type="submit" class="btn btn-success w-100" id="btn-guardar" disabled>Guardar venta</button>
+    </form>
+</div>
+
+<script>
+const buscarInput = document.getElementById("buscar-cliente");
+const resultadosDiv = document.getElementById("resultados-busqueda");
+const clienteIdInput = document.getElementById("cliente_id");
+const clienteSeleccionado = document.getElementById("cliente-seleccionado");
+const btnGuardar = document.getElementById("btn-guardar");
+
+// Prellenar si viene desde Clientes
+const params = new URLSearchParams(window.location.search);
+if (params.get("cliente_id") && params.get("nombre")) {
+    clienteIdInput.value = params.get("cliente_id");
+    buscarInput.value = params.get("nombre");
+    clienteSeleccionado.textContent = "✓ " + params.get("nombre");
+    clienteSeleccionado.style.display = "block";
+    btnGuardar.disabled = false;
+}
+
+let timeout;
+buscarInput.addEventListener("input", () => {
+    clearTimeout(timeout);
+    clienteIdInput.value = "";
+    btnGuardar.disabled = true;
+    clienteSeleccionado.style.display = "none";
+    const q = buscarInput.value.trim();
+    if (q.length < 2) { resultadosDiv.innerHTML = ""; return; }
+    timeout = setTimeout(() => {
+        fetch(`/api/buscar-clientes?q=${encodeURIComponent(q)}`)
+            .then(r => r.json())
+            .then(data => {
+                resultadosDiv.innerHTML = "";
+                if (data.length === 0) {
+                    resultadosDiv.innerHTML = '<div class="list-group-item text-muted">No se encontraron clientes</div>';
+                    return;
+                }
+                data.forEach(c => {
+                    const item = document.createElement("button");
+                    item.type = "button";
+                    item.className = "list-group-item list-group-item-action";
+                    item.textContent = `${c.nombre} — ${c.telefono}`;
+                    item.addEventListener("click", () => {
+                        clienteIdInput.value = c.id;
+                        buscarInput.value = c.nombre;
+                        resultadosDiv.innerHTML = "";
+                        clienteSeleccionado.textContent = "✓ " + c.nombre + " (" + c.telefono + ")";
+                        clienteSeleccionado.style.display = "block";
+                        btnGuardar.disabled = false;
+                    });
+                    resultadosDiv.appendChild(item);
+                });
+            });
+    }, 300);
+});
+
+document.addEventListener("click", (e) => {
+    if (!resultadosDiv.contains(e.target) && e.target !== buscarInput) {
+        resultadosDiv.innerHTML = "";
+    }
+});
+</script>
+{% endblock %}

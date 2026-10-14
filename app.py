@@ -1,5 +1,5 @@
 import os
-from flask import Flask, render_template, request, redirect, url_for, flash, session
+from flask import Flask, render_template, request, redirect, url_for, flash, session, jsonify
 from functools import wraps
 from database import init_db, get_conn, calcular_fecha_vencimiento
 from scheduler import iniciar_scheduler
@@ -46,10 +46,13 @@ def dashboard():
     hoy = datetime.today().strftime("%Y-%m-%d")
     proximos_7 = (datetime.today() + timedelta(days=7)).strftime("%Y-%m-%d")
 
-    por_vencer = conn.execute(
-        "SELECT * FROM clientes WHERE fecha_vencimiento BETWEEN ? AND ? AND activo = 1 ORDER BY fecha_vencimiento",
-        (hoy, proximos_7)
-    ).fetchall()
+    por_vencer = conn.execute("""
+        SELECT v.*, c.nombre, c.telefono
+        FROM ventas v
+        JOIN clientes c ON v.cliente_id = c.id
+        WHERE v.fecha_vencimiento BETWEEN ? AND ? AND v.activo = 1 AND c.activo = 1
+        ORDER BY v.fecha_vencimiento
+    """, (hoy, proximos_7)).fetchall()
 
     total_clientes = conn.execute("SELECT COUNT(*) FROM clientes WHERE activo = 1").fetchone()[0]
     total_recordatorios = conn.execute("SELECT COUNT(*) FROM recordatorios").fetchone()[0]
@@ -66,6 +69,8 @@ def dashboard():
                            wa_status=wa_status)
 
 
+# ── CLIENTES ──────────────────────────────────────────────────────────────────
+
 @app.route("/clientes")
 @login_required
 def clientes():
@@ -79,9 +84,68 @@ def clientes():
 @login_required
 def nuevo_cliente():
     if request.method == "POST":
-        nombre = request.form["nombre"]
-        telefono = request.form["telefono"]
-        alimento = request.form["alimento"]
+        nombre = request.form["nombre"].strip()
+        telefono = request.form["telefono"].strip()
+        conn = get_conn()
+        conn.execute(
+            "INSERT INTO clientes (nombre, telefono) VALUES (?,?)",
+            (nombre, telefono)
+        )
+        conn.commit()
+        conn.close()
+        flash(f"Cliente {nombre} agregado.", "success")
+        return redirect(url_for("clientes"))
+    return render_template("nuevo_cliente.html")
+
+
+@app.route("/clientes/<int:cid>/eliminar", methods=["POST"])
+@login_required
+def eliminar_cliente(cid):
+    conn = get_conn()
+    conn.execute("UPDATE clientes SET activo = 0 WHERE id = ?", (cid,))
+    conn.execute("UPDATE ventas SET activo = 0 WHERE cliente_id = ?", (cid,))
+    conn.commit()
+    conn.close()
+    flash("Cliente eliminado.", "warning")
+    return redirect(url_for("clientes"))
+
+
+@app.route("/api/buscar-clientes")
+@login_required
+def buscar_clientes():
+    q = request.args.get("q", "").strip()
+    conn = get_conn()
+    resultados = conn.execute(
+        "SELECT id, nombre, telefono FROM clientes WHERE activo = 1 AND (nombre LIKE ? OR telefono LIKE ?) LIMIT 10",
+        (f"%{q}%", f"%{q}%")
+    ).fetchall()
+    conn.close()
+    return jsonify([dict(r) for r in resultados])
+
+
+# ── VENTAS ────────────────────────────────────────────────────────────────────
+
+@app.route("/ventas")
+@login_required
+def ventas():
+    conn = get_conn()
+    lista = conn.execute("""
+        SELECT v.*, c.nombre, c.telefono
+        FROM ventas v
+        JOIN clientes c ON v.cliente_id = c.id
+        WHERE v.activo = 1 AND c.activo = 1
+        ORDER BY v.fecha_compra DESC
+    """).fetchall()
+    conn.close()
+    return render_template("ventas.html", ventas=lista)
+
+
+@app.route("/ventas/nueva", methods=["GET", "POST"])
+@login_required
+def nueva_venta():
+    if request.method == "POST":
+        cliente_id = request.form["cliente_id"]
+        alimento = request.form["alimento"].strip()
         kg = float(request.form["kg_comprados"])
         fecha = request.form["fecha_compra"]
         gramos = float(request.form["gramos_por_dia"])
@@ -89,24 +153,31 @@ def nuevo_cliente():
         fecha_venc = calcular_fecha_vencimiento(fecha, kg, gramos)
 
         conn = get_conn()
+        # Verificar que el cliente existe
+        cliente = conn.execute("SELECT * FROM clientes WHERE id = ? AND activo = 1", (cliente_id,)).fetchone()
+        if not cliente:
+            flash("Cliente no encontrado.", "danger")
+            conn.close()
+            return redirect(url_for("nueva_venta"))
+
         conn.execute(
-            "INSERT INTO clientes (nombre, telefono, alimento, kg_comprados, fecha_compra, gramos_por_dia, fecha_vencimiento) VALUES (?,?,?,?,?,?,?)",
-            (nombre, telefono, alimento, kg, fecha, gramos, fecha_venc)
+            "INSERT INTO ventas (cliente_id, alimento, kg_comprados, fecha_compra, gramos_por_dia, fecha_vencimiento) VALUES (?,?,?,?,?,?)",
+            (cliente_id, alimento, kg, fecha, gramos, fecha_venc)
         )
         conn.commit()
         conn.close()
-        flash(f"Cliente {nombre} agregado. El alimento se termina el {fecha_venc}.", "success")
-        return redirect(url_for("clientes"))
+        flash(f"Venta registrada para {cliente['nombre']}. El alimento se termina el {fecha_venc}.", "success")
+        return redirect(url_for("ventas"))
 
-    return render_template("nuevo_cliente.html")
+    return render_template("nueva_venta.html")
 
 
-@app.route("/clientes/cargar-excel", methods=["GET", "POST"])
+@app.route("/ventas/cargar-excel", methods=["GET", "POST"])
 @login_required
 def cargar_excel():
     if request.method == "POST":
         archivo = request.files.get("archivo")
-        gramos = float(request.form.get("gramos_por_dia", 300))
+        gramos_default = float(request.form.get("gramos_por_dia", 300))
 
         if not archivo or not archivo.filename.endswith((".xlsx", ".xls")):
             flash("Seleccioná un archivo Excel válido (.xlsx o .xls)", "danger")
@@ -119,21 +190,37 @@ def cargar_excel():
             conn = get_conn()
             agregados = 0
             for _, row in df.iterrows():
+                nombre = str(row["nombre"]).strip()
+                telefono = str(row["telefono"]).strip()
+                alimento = str(row["alimento"]).strip()
                 fecha_str = pd.to_datetime(row["fecha_compra"]).strftime("%Y-%m-%d")
                 kg = float(row["kg_comprados"])
-                gramos_cliente = float(row["gramos_por_dia"]) if "gramos_por_dia" in row and pd.notna(row["gramos_por_dia"]) else gramos
-                fecha_venc = calcular_fecha_vencimiento(fecha_str, kg, gramos_cliente)
+                gramos = float(row["gramos_por_dia"]) if "gramos_por_dia" in row and pd.notna(row.get("gramos_por_dia")) else gramos_default
+                fecha_venc = calcular_fecha_vencimiento(fecha_str, kg, gramos)
+
+                # Buscar o crear cliente por teléfono
+                cliente = conn.execute(
+                    "SELECT id FROM clientes WHERE telefono = ? AND activo = 1", (telefono,)
+                ).fetchone()
+                if cliente:
+                    cliente_id = cliente["id"]
+                else:
+                    conn.execute("INSERT INTO clientes (nombre, telefono) VALUES (?,?)", (nombre, telefono))
+                    conn.commit()
+                    cliente_id = conn.execute(
+                        "SELECT id FROM clientes WHERE telefono = ? ORDER BY id DESC LIMIT 1", (telefono,)
+                    ).fetchone()["id"]
 
                 conn.execute(
-                    "INSERT INTO clientes (nombre, telefono, alimento, kg_comprados, fecha_compra, gramos_por_dia, fecha_vencimiento) VALUES (?,?,?,?,?,?,?)",
-                    (str(row["nombre"]), str(row["telefono"]), str(row["alimento"]), kg, fecha_str, gramos_cliente, fecha_venc)
+                    "INSERT INTO ventas (cliente_id, alimento, kg_comprados, fecha_compra, gramos_por_dia, fecha_vencimiento) VALUES (?,?,?,?,?,?)",
+                    (cliente_id, alimento, kg, fecha_str, gramos, fecha_venc)
                 )
                 agregados += 1
 
             conn.commit()
             conn.close()
-            flash(f"Se cargaron {agregados} clientes correctamente.", "success")
-            return redirect(url_for("clientes"))
+            flash(f"Se cargaron {agregados} ventas correctamente.", "success")
+            return redirect(url_for("ventas"))
 
         except Exception as e:
             flash(f"Error al leer el archivo: {str(e)}", "danger")
@@ -142,86 +229,57 @@ def cargar_excel():
     return render_template("cargar_excel.html")
 
 
+@app.route("/ventas/<int:vid>/eliminar", methods=["POST"])
+@login_required
+def eliminar_venta(vid):
+    conn = get_conn()
+    conn.execute("UPDATE ventas SET activo = 0 WHERE id = ?", (vid,))
+    conn.commit()
+    conn.close()
+    flash("Venta eliminada.", "warning")
+    return redirect(url_for("ventas"))
+
+
+@app.route("/ventas/<int:vid>/enviar-recordatorio", methods=["POST"])
+@login_required
+def enviar_recordatorio_manual(vid):
+    conn = get_conn()
+    v = conn.execute("""
+        SELECT v.*, c.nombre, c.telefono
+        FROM ventas v JOIN clientes c ON v.cliente_id = c.id
+        WHERE v.id = ?
+    """, (vid,)).fetchone()
+    if v:
+        from whatsapp import enviar_recordatorio
+        sid = enviar_recordatorio(v["nombre"], v["telefono"], v["alimento"], v["id"])
+        conn.execute(
+            "INSERT INTO recordatorios (venta_id, cliente_id, fecha_envio) VALUES (?, ?, ?)",
+            (v["id"], v["cliente_id"], datetime.today().strftime("%Y-%m-%d"))
+        )
+        conn.commit()
+        flash(f"Recordatorio enviado a {v['nombre']}. ID: {sid}", "success")
+    conn.close()
+    return redirect(url_for("ventas"))
+
+
+# ── RECORDATORIOS ─────────────────────────────────────────────────────────────
+
 @app.route("/recordatorios")
 @login_required
 def recordatorios():
     conn = get_conn()
     lista = conn.execute("""
-        SELECT r.*, c.nombre, c.alimento, c.telefono
+        SELECT r.*, c.nombre, c.telefono, v.alimento
         FROM recordatorios r
         JOIN clientes c ON r.cliente_id = c.id
+        JOIN ventas v ON r.venta_id = v.id
         ORDER BY r.fecha_envio DESC
     """).fetchall()
     conn.close()
     return render_template("recordatorios.html", recordatorios=lista)
 
 
-@app.route("/webhook/respuesta", methods=["POST"])
-def webhook_respuesta():
-    """Twilio llama a este endpoint cuando el cliente responde el WhatsApp."""
-    from_number = request.form.get("From", "").replace("whatsapp:+", "")
-    body = request.form.get("Body", "").strip().upper()
-
-    conn = get_conn()
-    cliente = conn.execute(
-        "SELECT * FROM clientes WHERE telefono LIKE ? AND activo = 1",
-        (f"%{from_number}%",)
-    ).fetchone()
-
-    if cliente and body in ("SI", "SÍ", "NO"):
-        recordatorio = conn.execute(
-            "SELECT * FROM recordatorios WHERE cliente_id = ? AND respuesta IS NULL ORDER BY fecha_envio DESC LIMIT 1",
-            (cliente["id"],)
-        ).fetchone()
-
-        if recordatorio:
-            conn.execute(
-                "UPDATE recordatorios SET respuesta = ?, fecha_respuesta = ? WHERE id = ?",
-                (body, datetime.today().strftime("%Y-%m-%d"), recordatorio["id"])
-            )
-
-            if body in ("SI", "SÍ"):
-                nueva_fecha = datetime.today().strftime("%Y-%m-%d")
-                nueva_venc = calcular_fecha_vencimiento(nueva_fecha, cliente["kg_comprados"], cliente["gramos_por_dia"])
-                conn.execute(
-                    "UPDATE clientes SET fecha_compra = ?, fecha_vencimiento = ? WHERE id = ?",
-                    (nueva_fecha, nueva_venc, cliente["id"])
-                )
-
-            conn.commit()
-
-    conn.close()
-    return '<?xml version="1.0" encoding="UTF-8"?><Response></Response>', 200, {"Content-Type": "text/xml"}
-
-
-@app.route("/clientes/<int:cid>/enviar-recordatorio", methods=["POST"])
-@login_required
-def enviar_recordatorio_manual(cid):
-    conn = get_conn()
-    c = conn.execute("SELECT * FROM clientes WHERE id = ?", (cid,)).fetchone()
-    if c:
-        from whatsapp import enviar_recordatorio
-        sid = enviar_recordatorio(c["nombre"], c["telefono"], c["alimento"], c["id"])
-        conn.execute(
-            "INSERT INTO recordatorios (cliente_id, fecha_envio) VALUES (?, ?)",
-            (c["id"], datetime.today().strftime("%Y-%m-%d"))
-        )
-        conn.commit()
-        flash(f"Recordatorio enviado a {c['nombre']}. ID: {sid}", "success")
-    conn.close()
-    return redirect(url_for("clientes"))
-
-
-@app.route("/clientes/<int:cid>/eliminar", methods=["POST"])
-@login_required
-def eliminar_cliente(cid):
-    conn = get_conn()
-    conn.execute("UPDATE clientes SET activo = 0 WHERE id = ?", (cid,))
-    conn.commit()
-    conn.close()
-    flash("Cliente eliminado.", "warning")
-    return redirect(url_for("clientes"))
-
+# ── API ───────────────────────────────────────────────────────────────────────
 
 @app.route("/api/check-reminders", methods=["POST"])
 def check_reminders():

@@ -8,27 +8,29 @@ def revisar_vencimientos():
     manana = (datetime.today() + timedelta(days=1)).strftime("%Y-%m-%d")
     conn = get_conn()
 
-    clientes = conn.execute(
-        "SELECT * FROM clientes WHERE fecha_vencimiento = ? AND activo = 1",
-        (manana,)
-    ).fetchall()
+    ventas = conn.execute("""
+        SELECT v.*, c.nombre, c.telefono
+        FROM ventas v
+        JOIN clientes c ON v.cliente_id = c.id
+        WHERE v.fecha_vencimiento = ? AND v.activo = 1 AND c.activo = 1
+    """, (manana,)).fetchall()
 
-    for c in clientes:
+    for v in ventas:
         ya_enviado = conn.execute(
-            "SELECT id FROM recordatorios WHERE cliente_id = ? AND fecha_envio = ?",
-            (c["id"], datetime.today().strftime("%Y-%m-%d"))
+            "SELECT id FROM recordatorios WHERE venta_id = ? AND fecha_envio = ?",
+            (v["id"], datetime.today().strftime("%Y-%m-%d"))
         ).fetchone()
 
         if ya_enviado:
             continue
 
-        sid = enviar_recordatorio(c["nombre"], c["telefono"], c["alimento"], c["id"])
+        sid = enviar_recordatorio(v["nombre"], v["telefono"], v["alimento"], v["id"])
         conn.execute(
-            "INSERT INTO recordatorios (cliente_id, fecha_envio) VALUES (?, ?)",
-            (c["id"], datetime.today().strftime("%Y-%m-%d"))
+            "INSERT INTO recordatorios (venta_id, cliente_id, fecha_envio) VALUES (?, ?, ?)",
+            (v["id"], v["cliente_id"], datetime.today().strftime("%Y-%m-%d"))
         )
         conn.commit()
-        print(f"Recordatorio enviado a {c['nombre']} - {sid}")
+        print(f"Recordatorio enviado a {v['nombre']} - {sid}")
 
     conn.close()
 

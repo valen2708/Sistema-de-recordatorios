@@ -90,6 +90,12 @@ def init_db():
             id {pk},
             nombre TEXT NOT NULL,
             telefono TEXT NOT NULL,
+            activo INTEGER DEFAULT 1
+        );
+
+        CREATE TABLE IF NOT EXISTS ventas (
+            id {pk},
+            cliente_id INTEGER NOT NULL,
             alimento TEXT NOT NULL,
             kg_comprados REAL NOT NULL,
             fecha_compra TEXT NOT NULL,
@@ -100,6 +106,7 @@ def init_db():
 
         CREATE TABLE IF NOT EXISTS recordatorios (
             id {pk},
+            venta_id INTEGER NOT NULL,
             cliente_id INTEGER NOT NULL,
             fecha_envio TEXT NOT NULL,
             respuesta TEXT,
