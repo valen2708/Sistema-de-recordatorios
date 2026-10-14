@@ -85,6 +85,7 @@ def init_db():
     else:
         pk = "INTEGER PRIMARY KEY AUTOINCREMENT"
 
+    # Crear tablas nuevas si no existen
     conn.executescript(f"""
         CREATE TABLE IF NOT EXISTS clientes (
             id {pk},
@@ -106,7 +107,7 @@ def init_db():
 
         CREATE TABLE IF NOT EXISTS recordatorios (
             id {pk},
-            venta_id INTEGER NOT NULL,
+            venta_id INTEGER,
             cliente_id INTEGER NOT NULL,
             fecha_envio TEXT NOT NULL,
             respuesta TEXT,
@@ -114,7 +115,70 @@ def init_db():
         )
     """)
     conn.commit()
+
+    # Migración: mover datos viejos de clientes → ventas si la tabla ventas está vacía
+    _migrar_si_necesario(conn)
     conn.close()
+
+
+def _migrar_si_necesario(conn):
+    """Si clientes tiene columna alimento (estructura vieja), migrar a ventas."""
+    try:
+        # Verificar si la tabla clientes tiene columna alimento (estructura vieja)
+        if DATABASE_URL:
+            cols = conn.execute("""
+                SELECT column_name FROM information_schema.columns
+                WHERE table_name = 'clientes' AND column_name = 'alimento'
+            """).fetchone()
+        else:
+            cols = conn.execute(
+                "SELECT name FROM pragma_table_info('clientes') WHERE name = 'alimento'"
+            ).fetchone()
+
+        if not cols:
+            return  # Ya está migrado
+
+        # Hay datos viejos en clientes, migrarlos a ventas
+        viejos = conn.execute(
+            "SELECT * FROM clientes WHERE activo = 1"
+        ).fetchall()
+
+        for c in viejos:
+            try:
+                alimento = c["alimento"]
+                kg = c["kg_comprados"]
+                fecha = c["fecha_compra"]
+                gramos = c["gramos_por_dia"]
+                fecha_venc = c["fecha_vencimiento"]
+                cliente_id = c["id"]
+
+                # Verificar si ya tiene venta migrada
+                existe = conn.execute(
+                    "SELECT id FROM ventas WHERE cliente_id = ? AND alimento = ? AND fecha_compra = ?",
+                    (cliente_id, alimento, fecha)
+                ).fetchone()
+
+                if not existe:
+                    conn.execute(
+                        "INSERT INTO ventas (cliente_id, alimento, kg_comprados, fecha_compra, gramos_por_dia, fecha_vencimiento) VALUES (?,?,?,?,?,?)",
+                        (cliente_id, alimento, kg, fecha, gramos, fecha_venc)
+                    )
+            except Exception:
+                continue
+
+        conn.commit()
+
+        # Eliminar columnas viejas de clientes (solo en PostgreSQL)
+        if DATABASE_URL:
+            for col in ["alimento", "kg_comprados", "fecha_compra", "gramos_por_dia", "fecha_vencimiento"]:
+                try:
+                    conn.execute(f"ALTER TABLE clientes DROP COLUMN IF EXISTS {col}")
+                except Exception:
+                    pass
+            conn.commit()
+
+    except Exception as e:
+        print(f"[migración] {e}")
 
 
 def calcular_fecha_vencimiento(fecha_compra_str, kg, gramos_por_dia):
