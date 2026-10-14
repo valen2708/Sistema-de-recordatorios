@@ -28,9 +28,9 @@ services:
           name: petshop-recordatorios-db
           property: connectionString
       - key: GREENAPI_INSTANCE
-        sync: false
+        value: "710722763445"
       - key: GREENAPI_TOKEN
-        sync: false
+        value: "3656535a6e504409b2304207feb8a015cbdd13f9ad8b4a21a0"
 
 databases:
   - name: petshop-recordatorios-db
