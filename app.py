@@ -271,8 +271,8 @@ def recordatorios():
     lista = conn.execute("""
         SELECT r.*, c.nombre, c.telefono, v.alimento
         FROM recordatorios r
-        JOIN clientes c ON r.cliente_id = c.id
-        JOIN ventas v ON r.venta_id = v.id
+        LEFT JOIN clientes c ON r.cliente_id = c.id
+        LEFT JOIN ventas v ON r.venta_id = v.id
         ORDER BY r.fecha_envio DESC
     """).fetchall()
     conn.close()
