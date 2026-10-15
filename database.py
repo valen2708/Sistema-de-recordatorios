@@ -180,6 +180,27 @@ def _migrar_si_necesario(conn):
     except Exception as e:
         print(f"[migración] {e}")
 
+    # Migración 2: agregar venta_id a recordatorios si no existe
+    try:
+        if DATABASE_URL:
+            col2 = conn.execute("""
+                SELECT column_name FROM information_schema.columns
+                WHERE table_name = 'recordatorios' AND column_name = 'venta_id'
+            """).fetchone()
+            if not col2:
+                conn.execute("ALTER TABLE recordatorios ADD COLUMN venta_id INTEGER")
+                conn.commit()
+                print("[migración] columna venta_id agregada a recordatorios")
+        else:
+            col2 = conn.execute(
+                "SELECT name FROM pragma_table_info('recordatorios') WHERE name = 'venta_id'"
+            ).fetchone()
+            if not col2:
+                conn.execute("ALTER TABLE recordatorios ADD COLUMN venta_id INTEGER")
+                conn.commit()
+    except Exception as e:
+        print(f"[migración2] {e}")
+
 
 def calcular_fecha_vencimiento(fecha_compra_str, kg, gramos_por_dia):
     fecha = datetime.strptime(fecha_compra_str, "%Y-%m-%d")
