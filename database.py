@@ -116,6 +116,20 @@ def init_db():
     """)
     conn.commit()
 
+    # Asegurar columna venta_id en recordatorios (por si la tabla existía antes)
+    try:
+        if DATABASE_URL:
+            tiene = conn.execute("""
+                SELECT column_name FROM information_schema.columns
+                WHERE table_name = 'recordatorios' AND column_name = 'venta_id'
+            """).fetchone()
+            if not tiene:
+                conn.execute("ALTER TABLE recordatorios ADD COLUMN venta_id INTEGER")
+                conn.commit()
+                print("[init_db] columna venta_id agregada a recordatorios")
+    except Exception as e:
+        print(f"[init_db] {e}")
+
     # Migración: mover datos viejos de clientes → ventas si la tabla ventas está vacía
     _migrar_si_necesario(conn)
     conn.close()
