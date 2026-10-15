@@ -5,7 +5,9 @@ from whatsapp import enviar_recordatorio
 
 
 def revisar_vencimientos():
-    manana = (datetime.today() + timedelta(days=1)).strftime("%Y-%m-%d")
+    from database import get_config
+    dias_antes = int(get_config("dias_anticipacion", "1"))
+    fecha_objetivo = (datetime.today() + timedelta(days=dias_antes)).strftime("%Y-%m-%d")
     conn = get_conn()
 
     ventas = conn.execute("""
@@ -13,7 +15,7 @@ def revisar_vencimientos():
         FROM ventas v
         JOIN clientes c ON v.cliente_id = c.id
         WHERE v.fecha_vencimiento = ? AND v.activo = 1 AND c.activo = 1
-    """, (manana,)).fetchall()
+    """, (fecha_objetivo,)).fetchall()
 
     for v in ventas:
         ya_enviado = conn.execute(

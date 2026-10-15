@@ -113,6 +113,11 @@ def init_db():
             fecha_envio TEXT NOT NULL,
             respuesta TEXT,
             fecha_respuesta TEXT
+        );
+
+        CREATE TABLE IF NOT EXISTS config (
+            clave TEXT PRIMARY KEY,
+            valor TEXT NOT NULL
         )
     """)
     conn.commit()
@@ -235,6 +240,23 @@ def _migrar_si_necesario(conn):
                 conn.commit()
     except Exception as e:
         print(f"[migración2] {e}")
+
+
+def get_config(clave, default=None):
+    conn = get_conn()
+    row = conn.execute("SELECT valor FROM config WHERE clave = ?", (clave,)).fetchone()
+    conn.close()
+    return row["valor"] if row else default
+
+
+def set_config(clave, valor):
+    conn = get_conn()
+    if get_config(clave) is None:
+        conn.execute("INSERT INTO config (clave, valor) VALUES (?, ?)", (clave, str(valor)))
+    else:
+        conn.execute("UPDATE config SET valor = ? WHERE clave = ?", (str(valor), clave))
+    conn.commit()
+    conn.close()
 
 
 def calcular_fecha_vencimiento(fecha_compra_str, kg, gramos_por_dia):

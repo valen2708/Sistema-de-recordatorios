@@ -1,7 +1,7 @@
 import os
 from flask import Flask, render_template, request, redirect, url_for, flash, session, jsonify
 from functools import wraps
-from database import init_db, get_conn, calcular_fecha_vencimiento
+from database import init_db, get_conn, calcular_fecha_vencimiento, get_config, set_config
 from scheduler import iniciar_scheduler
 from whatsapp import get_estado_conexion
 import pandas as pd
@@ -327,6 +327,23 @@ def recordatorios():
     """).fetchall()
     conn.close()
     return render_template("recordatorios.html", recordatorios=lista)
+
+
+# ── CONFIGURACIÓN ─────────────────────────────────────────────────────────────
+
+@app.route("/configuracion", methods=["GET", "POST"])
+@login_required
+def configuracion():
+    if request.method == "POST":
+        dias = request.form.get("dias_anticipacion", "1").strip()
+        if dias.isdigit() and 1 <= int(dias) <= 7:
+            set_config("dias_anticipacion", dias)
+            flash(f"Configuración guardada: recordatorios {dias} día(s) antes.", "success")
+        else:
+            flash("Valor inválido. Ingresá un número entre 1 y 7.", "danger")
+        return redirect(url_for("configuracion"))
+    dias_actual = get_config("dias_anticipacion", "1")
+    return render_template("configuracion.html", dias_actual=dias_actual)
 
 
 # ── API ───────────────────────────────────────────────────────────────────────

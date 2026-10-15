@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h4 class="fw-bold mb-0"><i class="bi bi-gear me-2"></i>Configuración</h4>
+</div>
+
+<div class="row">
+    <div class="col-md-6">
+        <div class="card p-4">
+            <h6 class="fw-semibold mb-3"><i class="bi bi-bell me-2 text-primary"></i>Recordatorios automáticos</h6>
+            <form method="POST">
+                <div class="mb-3">
+                    <label class="form-label">¿Con cuántos días de anticipación enviar el recordatorio?</label>
+                    <div class="d-flex align-items-center gap-3">
+                        <input type="number" name="dias_anticipacion" class="form-control" style="max-width:100px;"
+                            min="1" max="7" value="{{ dias_actual }}" required>
+                        <span class="text-muted">día(s) antes de que se termine el alimento</span>
+                    </div>
+                    <div class="form-text">Valor entre 1 y 7. El scheduler diario enviará recordatorios a los clientes cuyo alimento vence en exactamente ese plazo.</div>
+                </div>
+                <button type="submit" class="btn btn-primary"><i class="bi bi-check-circle me-1"></i>Guardar</button>
+            </form>
+        </div>
+    </div>
+
+    <div class="col-md-6">
+        <div class="card p-4 h-100">
+            <h6 class="fw-semibold mb-3"><i class="bi bi-info-circle me-2 text-secondary"></i>Cómo funciona</h6>
+            <ul class="text-muted small mb-0" style="line-height:2;">
+                <li>Cada día a las 9:00 AM se ejecuta el recordatorio automático.</li>
+                <li>Busca todas las ventas cuya fecha de vencimiento sea exactamente <strong>N días</strong> desde hoy.</li>
+                <li>Envía un WhatsApp a cada cliente por esa venta (evita duplicados).</li>
+                <li>También podés enviar recordatorios manualmente desde la página de Ventas.</li>
+            </ul>
+        </div>
+    </div>
+</div>
+{% endblock %}
