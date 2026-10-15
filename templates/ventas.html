@@ -8,6 +8,16 @@
     </div>
 </div>
 
+<div class="d-flex gap-2 mb-3 flex-wrap">
+    <input type="text" id="filtro-texto" class="form-control" style="max-width:260px;" placeholder="🔍 Buscar cliente o alimento...">
+    <select id="filtro-estado" class="form-select" style="max-width:180px;">
+        <option value="">Todos</option>
+        <option value="vencido">🔴 Vencidos</option>
+        <option value="urgente">🟡 Urgentes (≤5d)</option>
+        <option value="ok">🟢 Al día</option>
+    </select>
+</div>
+
 <div class="card">
     <div class="table-responsive">
         <table class="table table-hover align-middle mb-0">
@@ -39,7 +49,7 @@
                   {% set color = "success" %}
                   {% set label = dias ~ " días" %}
                 {% endif %}
-                <tr>
+                <tr class="fila-venta" data-texto="{{ v.nombre|lower }} {{ v.alimento|lower }}" data-dias="{{ dias }}">
                     <td><strong>{{ v.nombre }}</strong></td>
                     <td>{{ v.telefono }}</td>
                     <td>{{ v.alimento }}</td>
@@ -68,4 +78,25 @@
         </table>
     </div>
 </div>
+<script>
+const filtroTexto = document.getElementById("filtro-texto");
+const filtroEstado = document.getElementById("filtro-estado");
+
+function filtrar() {
+    const texto = filtroTexto.value.toLowerCase();
+    const estado = filtroEstado.value;
+    document.querySelectorAll(".fila-venta").forEach(fila => {
+        const matchTexto = !texto || fila.dataset.texto.includes(texto);
+        const dias = parseInt(fila.dataset.dias);
+        let matchEstado = true;
+        if (estado === "vencido") matchEstado = dias <= 0;
+        else if (estado === "urgente") matchEstado = dias > 0 && dias <= 5;
+        else if (estado === "ok") matchEstado = dias > 5;
+        fila.style.display = (matchTexto && matchEstado) ? "" : "none";
+    });
+}
+
+filtroTexto.addEventListener("input", filtrar);
+filtroEstado.addEventListener("change", filtrar);
+</script>
 {% endblock %}
