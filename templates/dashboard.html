@@ -1,59 +1,71 @@
 {% extends "base.html" %}
 {% block content %}
-<h4 class="mb-4 fw-bold">Dashboard</h4>
 
-{# ── Estado WhatsApp ── #}
-<div class="card p-3 mb-4 d-flex flex-row align-items-center gap-3 flex-wrap">
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h4 class="fw-bold mb-0" style="color:var(--fg)">Dashboard</h4>
+        <p class="mb-0" style="color:var(--muted);font-size:13px;">Resumen general del sistema</p>
+    </div>
+    {# Estado WhatsApp #}
     {% if wa_status.no_config %}
-        <span class="badge bg-secondary fs-6">⚙️ WhatsApp no configurado</span>
-        <span class="text-muted small">Configurá las variables GREENAPI_INSTANCE y GREENAPI_TOKEN en Render.</span>
+        <span class="badge bg-secondary px-3 py-2">⚙️ WhatsApp sin configurar</span>
     {% elif wa_status.error %}
-        <span class="badge bg-danger fs-6">⚠️ Error al verificar WhatsApp</span>
+        <span class="badge bg-danger px-3 py-2">⚠️ Error WhatsApp</span>
     {% elif wa_status.connected %}
-        <span class="badge bg-success fs-6">✅ WhatsApp conectado</span>
-        <span class="text-muted small">El número del local está activo y listo para enviar.</span>
+        <span class="badge bg-success px-3 py-2">✅ WhatsApp activo</span>
     {% else %}
-        <span class="badge bg-warning text-dark fs-6">📱 WhatsApp desconectado</span>
-        <span class="text-muted small">
-            Entrá a
-            <a href="https://console.green-api.com" target="_blank">green-api.com</a>,
-            abrí tu instancia y escaneá el QR con el celular del local.
-        </span>
+        <span class="badge bg-warning px-3 py-2">📱 WhatsApp desconectado</span>
     {% endif %}
 </div>
 
-{# ── Tarjetas de stats ── #}
+{# ── Stats tiles ── #}
 <div class="row g-3 mb-4">
     <div class="col-md-4">
-        <div class="card p-3 text-center">
-            <div class="fs-1 text-success fw-bold">{{ total_clientes }}</div>
-            <div class="text-muted">Clientes activos</div>
+        <div class="card p-4">
+            <div class="d-flex align-items-center gap-3">
+                <div style="width:48px;height:48px;background:rgba(52,211,153,.15);border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:22px;">🐾</div>
+                <div>
+                    <div style="font-size:28px;font-weight:700;color:var(--accent2);line-height:1;">{{ total_clientes }}</div>
+                    <div style="color:var(--muted);font-size:13px;">Clientes activos</div>
+                </div>
+            </div>
         </div>
     </div>
     <div class="col-md-4">
-        <div class="card p-3 text-center">
-            <div class="fs-1 text-primary fw-bold">{{ total_recordatorios }}</div>
-            <div class="text-muted">Recordatorios enviados</div>
+        <div class="card p-4">
+            <div class="d-flex align-items-center gap-3">
+                <div style="width:48px;height:48px;background:rgba(79,110,247,.15);border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:22px;">💬</div>
+                <div>
+                    <div style="font-size:28px;font-weight:700;color:#818cf8;line-height:1;">{{ total_recordatorios }}</div>
+                    <div style="color:var(--muted);font-size:13px;">Recordatorios enviados</div>
+                </div>
+            </div>
         </div>
     </div>
     <div class="col-md-4">
-        <div class="card p-3 text-center">
-            <div class="fs-1 text-warning fw-bold">{{ respondieron_si }}</div>
-            <div class="text-muted">Respondieron SI</div>
+        <div class="card p-4">
+            <div class="d-flex align-items-center gap-3">
+                <div style="width:48px;height:48px;background:rgba(251,191,36,.12);border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:22px;">✅</div>
+                <div>
+                    <div style="font-size:28px;font-weight:700;color:var(--warning);line-height:1;">{{ respondieron_si }}</div>
+                    <div style="color:var(--muted);font-size:13px;">Respondieron SI</div>
+                </div>
+            </div>
         </div>
     </div>
 </div>
 
 {# ── Tabla por vencer ── #}
-<div class="card p-4">
-    <h5 class="fw-bold mb-3">
-        <i class="bi bi-exclamation-triangle-fill text-warning me-2"></i>
-        Alimentos que vencen en los próximos 7 días
-    </h5>
+<div class="card">
+    <div class="p-4 pb-2 d-flex align-items-center gap-2">
+        <i class="bi bi-exclamation-triangle" style="color:var(--warning)"></i>
+        <h6 class="fw-bold mb-0">Vencen en los próximos 7 días</h6>
+        <span class="badge bg-secondary ms-auto">{{ por_vencer|length }}</span>
+    </div>
     {% if por_vencer %}
     <div class="table-responsive">
-        <table class="table table-hover align-middle">
-            <thead class="table-light">
+        <table class="table table-hover align-middle mb-0">
+            <thead>
                 <tr>
                     <th>Cliente</th>
                     <th>Teléfono</th>
@@ -68,34 +80,25 @@
                 {% set c = item.v %}
                 {% set dias = item.dias %}
                 {% if dias <= 0 %}
-                  {% set color = "danger" %}
-                  {% set label = "Vencido" %}
+                  {% set color = "danger" %} {% set label = "Vencido" %}
                 {% elif dias <= 2 %}
-                  {% set color = "danger" %}
-                  {% set label = dias ~ "d" %}
+                  {% set color = "danger" %} {% set label = dias ~ "d" %}
                 {% elif dias <= 4 %}
-                  {% set color = "warning" %}
-                  {% set label = dias ~ "d" %}
+                  {% set color = "warning" %} {% set label = dias ~ "d" %}
                 {% else %}
-                  {% set color = "success" %}
-                  {% set label = dias ~ "d" %}
+                  {% set color = "success" %} {% set label = dias ~ "d" %}
                 {% endif %}
                 <tr>
                     <td><strong>{{ c.nombre }}</strong></td>
-                    <td>{{ c.telefono }}</td>
+                    <td style="color:var(--muted)">{{ c.telefono }}</td>
                     <td>{{ c.alimento }}</td>
-                    <td>{{ c.kg_comprados }} kg</td>
+                    <td style="color:var(--muted)">{{ c.kg_comprados }} kg</td>
                     <td>
-                        <span class="badge bg-{{ color }} text-{{ 'dark' if color == 'warning' else 'white' }}">
-                            {{ c.fecha_vencimiento }} · {{ label }}
-                        </span>
+                        <span class="badge bg-{{ color }}">{{ c.fecha_vencimiento }} · {{ label }}</span>
                     </td>
                     <td>
                         <form method="POST" action="/ventas/{{ c.id }}/enviar-recordatorio">
-                            <button
-                                class="btn btn-sm btn-success"
-                                title="Enviar recordatorio por WhatsApp"
-                                {% if not wa_status.connected %}disabled{% endif %}>
+                            <button class="btn btn-sm btn-success" {% if not wa_status.connected %}disabled{% endif %}>
                                 <i class="bi bi-whatsapp me-1"></i>Enviar
                             </button>
                         </form>
@@ -106,7 +109,9 @@
         </table>
     </div>
     {% else %}
-    <p class="text-muted">No hay alimentos próximos a vencer esta semana.</p>
+    <div class="p-4" style="color:var(--muted)">
+        <i class="bi bi-check-circle me-2" style="color:var(--accent2)"></i>No hay alimentos próximos a vencer esta semana.
+    </div>
     {% endif %}
 </div>
 {% endblock %}
