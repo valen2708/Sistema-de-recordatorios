@@ -1,0 +1,78 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h4 class="fw-bold mb-0">{{ cliente.nombre }}</h4>
+        <span class="text-muted">{{ cliente.telefono }}</span>
+    </div>
+    <div>
+        <a href="/ventas/nueva?cliente_id={{ cliente.id }}&nombre={{ cliente.nombre }}" class="btn btn-success me-2">
+            <i class="bi bi-cart-plus me-1"></i>Nueva venta
+        </a>
+        <a href="/clientes" class="btn btn-outline-secondary"><i class="bi bi-arrow-left me-1"></i>Volver</a>
+    </div>
+</div>
+
+{% if ventas %}
+<div class="card">
+    <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0">
+            <thead class="table-light">
+                <tr>
+                    <th>Alimento</th>
+                    <th>Kg</th>
+                    <th>Compra</th>
+                    <th>Vence</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in ventas %}
+                {% set v = item.v %}
+                {% set dias = item.dias %}
+                {% if dias <= 0 %}
+                  {% set color = "danger" %}
+                  {% set label = "Vencido" %}
+                {% elif dias <= 2 %}
+                  {% set color = "danger" %}
+                  {% set label = dias ~ " días" %}
+                {% elif dias <= 5 %}
+                  {% set color = "warning" %}
+                  {% set label = dias ~ " días" %}
+                {% else %}
+                  {% set color = "success" %}
+                  {% set label = dias ~ " días" %}
+                {% endif %}
+                <tr>
+                    <td><strong>{{ v.alimento }}</strong></td>
+                    <td>{{ v.kg_comprados }} kg</td>
+                    <td>{{ v.fecha_compra }}</td>
+                    <td>
+                        <span class="badge bg-{{ color }} text-{{ 'dark' if color == 'warning' else 'white' }}">
+                            {{ v.fecha_vencimiento }}
+                        </span>
+                        <small class="text-muted ms-1">{{ label }}</small>
+                    </td>
+                    <td class="text-end">
+                        <form method="POST" action="/ventas/{{ v.id }}/enviar-recordatorio" class="d-inline">
+                            <button class="btn btn-sm btn-success" title="Enviar recordatorio WhatsApp"><i class="bi bi-whatsapp"></i></button>
+                        </form>
+                        <form method="POST" action="/ventas/{{ v.id }}/eliminar" class="d-inline" onsubmit="return confirm('¿Eliminar esta venta?')">
+                            <button class="btn btn-sm btn-outline-danger"><i class="bi bi-trash"></i></button>
+                        </form>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% else %}
+<div class="card p-4 text-center text-muted">
+    <p>Este cliente no tiene ventas cargadas.</p>
+    <a href="/ventas/nueva?cliente_id={{ cliente.id }}&nombre={{ cliente.nombre }}" class="btn btn-success mt-2">
+        <i class="bi bi-cart-plus me-1"></i>Cargar primera venta
+    </a>
+</div>
+{% endif %}
+{% endblock %}

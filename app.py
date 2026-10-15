@@ -103,6 +103,26 @@ def nuevo_cliente():
     return render_template("nuevo_cliente.html")
 
 
+@app.route("/clientes/<int:cid>")
+@login_required
+def historial_cliente(cid):
+    conn = get_conn()
+    cliente = conn.execute("SELECT * FROM clientes WHERE id = ? AND activo = 1", (cid,)).fetchone()
+    if not cliente:
+        conn.close()
+        flash("Cliente no encontrado.", "danger")
+        return redirect(url_for("clientes"))
+    ventas_raw = conn.execute("""
+        SELECT * FROM ventas WHERE cliente_id = ? AND activo = 1 ORDER BY fecha_compra DESC
+    """, (cid,)).fetchall()
+    conn.close()
+    ventas = []
+    for v in ventas_raw:
+        dias = (datetime.strptime(v["fecha_vencimiento"], "%Y-%m-%d") - datetime.today()).days
+        ventas.append({"v": v, "dias": dias})
+    return render_template("historial_cliente.html", cliente=cliente, ventas=ventas)
+
+
 @app.route("/clientes/<int:cid>/eliminar", methods=["POST"])
 @login_required
 def eliminar_cliente(cid):
