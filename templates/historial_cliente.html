@@ -54,9 +54,10 @@
                         <small class="text-muted ms-1">{{ label }}</small>
                     </td>
                     <td class="text-end">
-                        <form method="POST" action="/ventas/{{ v.id }}/enviar-recordatorio" class="d-inline">
-                            <button class="btn btn-sm btn-success" title="Enviar recordatorio WhatsApp"><i class="bi bi-whatsapp"></i></button>
-                        </form>
+                        <button class="btn btn-sm btn-success" title="Enviar recordatorio WhatsApp"
+                            onclick="abrirModal({{ v.id }}, '{{ cliente.nombre }}', '{{ v.alimento }}', '{{ cliente.telefono }}')">
+                            <i class="bi bi-whatsapp"></i>
+                        </button>
                         <form method="POST" action="/ventas/{{ v.id }}/eliminar" class="d-inline" onsubmit="return confirm('¿Eliminar esta venta?')">
                             <button class="btn btn-sm btn-outline-danger"><i class="bi bi-trash"></i></button>
                         </form>
@@ -75,4 +76,37 @@
     </a>
 </div>
 {% endif %}
+
+{# Modal envío personalizado #}
+<div class="modal fade" id="modalEnviar" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title"><i class="bi bi-whatsapp text-success me-2"></i>Enviar recordatorio</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <form method="POST" id="formEnviar">
+        <div class="modal-body">
+          <p class="text-muted mb-2" id="modal-subtitulo"></p>
+          <label class="form-label fw-semibold">Mensaje</label>
+          <textarea name="mensaje_custom" id="modal-mensaje" class="form-control" rows="6"></textarea>
+          <div class="form-text">Podés editar el mensaje antes de enviarlo.</div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+          <button type="submit" class="btn btn-success"><i class="bi bi-send me-1"></i>Enviar</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+<script>
+function abrirModal(vid, nombre, alimento, telefono) {
+    document.getElementById("formEnviar").action = `/ventas/${vid}/enviar-recordatorio`;
+    document.getElementById("modal-subtitulo").textContent = `Para: ${nombre} (${telefono})`;
+    document.getElementById("modal-mensaje").value =
+        `Hola ${nombre}! 🐾\n\nMañana se termina el alimento *${alimento}* de tu mascota.\n\n¿Querés que te enviemos más?\nRespondé *SI* o *NO*`;
+    new bootstrap.Modal(document.getElementById("modalEnviar")).show();
+}
+</script>
 {% endblock %}

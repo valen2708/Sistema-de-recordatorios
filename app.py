@@ -279,8 +279,13 @@ def enviar_recordatorio_manual(vid):
         WHERE v.id = ?
     """, (vid,)).fetchone()
     if v:
-        from whatsapp import enviar_recordatorio
-        sid = enviar_recordatorio(v["nombre"], v["telefono"], v["alimento"], v["id"])
+        mensaje_custom = request.form.get("mensaje_custom", "").strip()
+        if mensaje_custom:
+            from whatsapp import enviar_mensaje_personalizado
+            sid = enviar_mensaje_personalizado(v["telefono"], mensaje_custom)
+        else:
+            from whatsapp import enviar_recordatorio
+            sid = enviar_recordatorio(v["nombre"], v["telefono"], v["alimento"], v["id"])
         conn.execute(
             "INSERT INTO recordatorios (venta_id, cliente_id, fecha_envio) VALUES (?, ?, ?)",
             (v["id"], v["cliente_id"], datetime.today().strftime("%Y-%m-%d"))
@@ -288,7 +293,9 @@ def enviar_recordatorio_manual(vid):
         conn.commit()
         flash(f"Recordatorio enviado a {v['nombre']}. ID: {sid}", "success")
     conn.close()
-    return redirect(url_for("ventas"))
+    # Volver a donde vino (ventas o historial)
+    ref = request.referrer or url_for("ventas")
+    return redirect(ref)
 
 
 # ── RECORDATORIOS ─────────────────────────────────────────────────────────────

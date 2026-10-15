@@ -16,6 +16,20 @@ def _armar_mensaje(nombre, alimento):
     )
 
 
+def enviar_mensaje_personalizado(telefono, mensaje):
+    if not GREENAPI_INSTANCE or not GREENAPI_TOKEN:
+        print(f"[SIMULADO] Mensaje personalizado a {telefono}")
+        return "simulado"
+    numero = telefono.strip().replace("+", "").replace(" ", "") + "@c.us"
+    url = f"{GREENAPI_URL}/waInstance{GREENAPI_INSTANCE}/sendMessage/{GREENAPI_TOKEN}"
+    try:
+        r = requests.post(url, json={"chatId": numero, "message": mensaje}, timeout=10)
+        data = r.json()
+        return data.get("idMessage", f"error: {data}")
+    except Exception as e:
+        return f"error: {e}"
+
+
 def enviar_recordatorio(nombre, telefono, alimento, cliente_id):
     if not GREENAPI_INSTANCE or not GREENAPI_TOKEN:
         print(f"[SIMULADO] Recordatorio para {nombre} ({telefono}) - {alimento}")
