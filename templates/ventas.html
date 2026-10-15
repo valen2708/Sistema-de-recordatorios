@@ -23,14 +23,34 @@
                 </tr>
             </thead>
             <tbody>
-                {% for v in ventas %}
+                {% for item in ventas %}
+                {% set v = item.v %}
+                {% set dias = item.dias %}
+                {% if dias <= 0 %}
+                  {% set color = "danger" %}
+                  {% set label = "Vencido" %}
+                {% elif dias <= 2 %}
+                  {% set color = "danger" %}
+                  {% set label = dias ~ " días" %}
+                {% elif dias <= 5 %}
+                  {% set color = "warning" %}
+                  {% set label = dias ~ " días" %}
+                {% else %}
+                  {% set color = "success" %}
+                  {% set label = dias ~ " días" %}
+                {% endif %}
                 <tr>
                     <td><strong>{{ v.nombre }}</strong></td>
                     <td>{{ v.telefono }}</td>
                     <td>{{ v.alimento }}</td>
                     <td>{{ v.kg_comprados }} kg</td>
                     <td>{{ v.fecha_compra }}</td>
-                    <td><span class="badge bg-success">{{ v.fecha_vencimiento }}</span></td>
+                    <td>
+                        <span class="badge bg-{{ color }} text-{{ 'dark' if color == 'warning' else 'white' }}">
+                            {{ v.fecha_vencimiento }}
+                        </span>
+                        <small class="text-muted ms-1">{{ label }}</small>
+                    </td>
                     <td class="d-flex gap-1 justify-content-end">
                         <form method="POST" action="/ventas/{{ v.id }}/enviar-recordatorio">
                             <button class="btn btn-sm btn-success" title="Enviar recordatorio WhatsApp"><i class="bi bi-whatsapp"></i></button>

@@ -64,14 +64,31 @@
                 </tr>
             </thead>
             <tbody>
-                {% for c in por_vencer %}
+                {% for item in por_vencer %}
+                {% set c = item.v %}
+                {% set dias = item.dias %}
+                {% if dias <= 0 %}
+                  {% set color = "danger" %}
+                  {% set label = "Vencido" %}
+                {% elif dias <= 2 %}
+                  {% set color = "danger" %}
+                  {% set label = dias ~ "d" %}
+                {% elif dias <= 4 %}
+                  {% set color = "warning" %}
+                  {% set label = dias ~ "d" %}
+                {% else %}
+                  {% set color = "success" %}
+                  {% set label = dias ~ "d" %}
+                {% endif %}
                 <tr>
                     <td><strong>{{ c.nombre }}</strong></td>
                     <td>{{ c.telefono }}</td>
                     <td>{{ c.alimento }}</td>
                     <td>{{ c.kg_comprados }} kg</td>
                     <td>
-                        <span class="badge bg-warning text-dark">{{ c.fecha_vencimiento }}</span>
+                        <span class="badge bg-{{ color }} text-{{ 'dark' if color == 'warning' else 'white' }}">
+                            {{ c.fecha_vencimiento }} · {{ label }}
+                        </span>
                     </td>
                     <td>
                         <form method="POST" action="/ventas/{{ c.id }}/enviar-recordatorio">

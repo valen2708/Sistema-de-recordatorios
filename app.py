@@ -46,13 +46,18 @@ def dashboard():
     hoy = datetime.today().strftime("%Y-%m-%d")
     proximos_7 = (datetime.today() + timedelta(days=7)).strftime("%Y-%m-%d")
 
-    por_vencer = conn.execute("""
+    por_vencer_raw = conn.execute("""
         SELECT v.*, c.nombre, c.telefono
         FROM ventas v
         JOIN clientes c ON v.cliente_id = c.id
         WHERE v.fecha_vencimiento BETWEEN ? AND ? AND v.activo = 1 AND c.activo = 1
         ORDER BY v.fecha_vencimiento
     """, (hoy, proximos_7)).fetchall()
+
+    por_vencer = []
+    for v in por_vencer_raw:
+        dias = (datetime.strptime(v["fecha_vencimiento"], "%Y-%m-%d") - datetime.today()).days
+        por_vencer.append({"v": v, "dias": dias})
 
     total_clientes = conn.execute("SELECT COUNT(*) FROM clientes WHERE activo = 1").fetchone()[0]
     total_recordatorios = conn.execute("SELECT COUNT(*) FROM recordatorios").fetchone()[0]
@@ -129,7 +134,7 @@ def buscar_clientes():
 @login_required
 def ventas():
     conn = get_conn()
-    lista = conn.execute("""
+    lista_raw = conn.execute("""
         SELECT v.*, c.nombre, c.telefono
         FROM ventas v
         JOIN clientes c ON v.cliente_id = c.id
@@ -137,6 +142,10 @@ def ventas():
         ORDER BY v.fecha_compra DESC
     """).fetchall()
     conn.close()
+    lista = []
+    for v in lista_raw:
+        dias = (datetime.strptime(v["fecha_vencimiento"], "%Y-%m-%d") - datetime.today()).days
+        lista.append({"v": v, "dias": dias})
     return render_template("ventas.html", ventas=lista)
 
 
