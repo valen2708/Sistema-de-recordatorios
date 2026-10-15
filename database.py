@@ -102,7 +102,8 @@ def init_db():
             fecha_compra TEXT NOT NULL,
             gramos_por_dia REAL NOT NULL,
             fecha_vencimiento TEXT NOT NULL,
-            activo INTEGER DEFAULT 1
+            activo INTEGER DEFAULT 1,
+            retirado INTEGER DEFAULT 0
         );
 
         CREATE TABLE IF NOT EXISTS recordatorios (
@@ -115,6 +116,26 @@ def init_db():
         )
     """)
     conn.commit()
+
+    # Asegurar columna retirado en ventas
+    try:
+        if DATABASE_URL:
+            tiene = conn.execute("""
+                SELECT column_name FROM information_schema.columns
+                WHERE table_name = 'ventas' AND column_name = 'retirado'
+            """).fetchone()
+            if not tiene:
+                conn.execute("ALTER TABLE ventas ADD COLUMN retirado INTEGER DEFAULT 0")
+                conn.commit()
+        else:
+            tiene = conn.execute(
+                "SELECT name FROM pragma_table_info('ventas') WHERE name = 'retirado'"
+            ).fetchone()
+            if not tiene:
+                conn.execute("ALTER TABLE ventas ADD COLUMN retirado INTEGER DEFAULT 0")
+                conn.commit()
+    except Exception as e:
+        print(f"[init_db retirado] {e}")
 
     # Asegurar columna venta_id en recordatorios (por si la tabla existía antes)
     try:

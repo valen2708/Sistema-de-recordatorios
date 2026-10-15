@@ -258,6 +258,20 @@ def cargar_excel():
     return render_template("cargar_excel.html")
 
 
+@app.route("/ventas/<int:vid>/retirado", methods=["POST"])
+@login_required
+def toggle_retirado(vid):
+    conn = get_conn()
+    v = conn.execute("SELECT retirado FROM ventas WHERE id = ?", (vid,)).fetchone()
+    if v:
+        nuevo = 0 if v["retirado"] else 1
+        conn.execute("UPDATE ventas SET retirado = ? WHERE id = ?", (nuevo, vid))
+        conn.commit()
+    conn.close()
+    ref = request.referrer or url_for("ventas")
+    return redirect(ref)
+
+
 @app.route("/ventas/<int:vid>/eliminar", methods=["POST"])
 @login_required
 def eliminar_venta(vid):

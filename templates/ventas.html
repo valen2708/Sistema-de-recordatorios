@@ -16,6 +16,11 @@
         <option value="urgente">🟡 Urgentes (≤5d)</option>
         <option value="ok">🟢 Al día</option>
     </select>
+    <select id="filtro-retirado" class="form-select" style="max-width:180px;">
+        <option value="">Pendientes y retirados</option>
+        <option value="0">📦 Pendientes</option>
+        <option value="1">✅ Retirados</option>
+    </select>
 </div>
 
 <div class="card">
@@ -49,7 +54,7 @@
                   {% set color = "success" %}
                   {% set label = dias ~ " días" %}
                 {% endif %}
-                <tr class="fila-venta" data-texto="{{ v.nombre|lower }} {{ v.alimento|lower }}" data-dias="{{ dias }}">
+                <tr class="fila-venta {% if v.retirado %}table-secondary{% endif %}" data-texto="{{ v.nombre|lower }} {{ v.alimento|lower }}" data-dias="{{ dias }}" data-retirado="{{ v.retirado }}">
                     <td><strong>{{ v.nombre }}</strong></td>
                     <td>{{ v.telefono }}</td>
                     <td>{{ v.alimento }}</td>
@@ -62,6 +67,12 @@
                         <small class="text-muted ms-1">{{ label }}</small>
                     </td>
                     <td class="d-flex gap-1 justify-content-end">
+                        <form method="POST" action="/ventas/{{ v.id }}/retirado">
+                            <button class="btn btn-sm {% if v.retirado %}btn-secondary{% else %}btn-outline-secondary{% endif %}"
+                                title="{% if v.retirado %}Marcar como pendiente{% else %}Marcar como retirado{% endif %}">
+                                {% if v.retirado %}<i class="bi bi-box-seam-fill"></i>{% else %}<i class="bi bi-box-seam"></i>{% endif %}
+                            </button>
+                        </form>
                         <button class="btn btn-sm btn-success" title="Enviar recordatorio WhatsApp"
                             onclick="abrirModal({{ v.id }}, '{{ v.nombre }}', '{{ v.alimento }}', '{{ v.telefono }}')">
                             <i class="bi bi-whatsapp"></i>
@@ -114,10 +125,12 @@ function abrirModal(vid, nombre, alimento, telefono) {
 
 const filtroTexto = document.getElementById("filtro-texto");
 const filtroEstado = document.getElementById("filtro-estado");
+const filtroRetirado = document.getElementById("filtro-retirado");
 
 function filtrar() {
     const texto = filtroTexto.value.toLowerCase();
     const estado = filtroEstado.value;
+    const retirado = filtroRetirado.value;
     document.querySelectorAll(".fila-venta").forEach(fila => {
         const matchTexto = !texto || fila.dataset.texto.includes(texto);
         const dias = parseInt(fila.dataset.dias);
@@ -125,11 +138,15 @@ function filtrar() {
         if (estado === "vencido") matchEstado = dias <= 0;
         else if (estado === "urgente") matchEstado = dias > 0 && dias <= 5;
         else if (estado === "ok") matchEstado = dias > 5;
-        fila.style.display = (matchTexto && matchEstado) ? "" : "none";
+        let matchRetirado = true;
+        if (retirado === "0") matchRetirado = fila.dataset.retirado === "0";
+        else if (retirado === "1") matchRetirado = fila.dataset.retirado === "1";
+        fila.style.display = (matchTexto && matchEstado && matchRetirado) ? "" : "none";
     });
 }
 
 filtroTexto.addEventListener("input", filtrar);
 filtroEstado.addEventListener("change", filtrar);
+filtroRetirado.addEventListener("change", filtrar);
 </script>
 {% endblock %}

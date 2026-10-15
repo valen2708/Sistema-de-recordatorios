@@ -53,7 +53,13 @@
                         </span>
                         <small class="text-muted ms-1">{{ label }}</small>
                     </td>
-                    <td class="text-end">
+                    <td class="text-end d-flex gap-1 justify-content-end">
+                        <form method="POST" action="/ventas/{{ v.id }}/retirado">
+                            <button class="btn btn-sm {% if v.retirado %}btn-secondary{% else %}btn-outline-secondary{% endif %}"
+                                title="{% if v.retirado %}Marcar como pendiente{% else %}Marcar como retirado{% endif %}">
+                                {% if v.retirado %}<i class="bi bi-box-seam-fill"></i>{% else %}<i class="bi bi-box-seam"></i>{% endif %}
+                            </button>
+                        </form>
                         <button class="btn btn-sm btn-success" title="Enviar recordatorio WhatsApp"
                             onclick="abrirModal({{ v.id }}, '{{ cliente.nombre }}', '{{ v.alimento }}', '{{ cliente.telefono }}')">
                             <i class="bi bi-whatsapp"></i>
