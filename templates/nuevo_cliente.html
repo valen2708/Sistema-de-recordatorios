@@ -11,10 +11,14 @@
             <label class="form-label fw-semibold">Nombre</label>
             <input type="text" name="nombre" class="form-control" placeholder="Ej: Juan Pérez" required>
         </div>
-        <div class="mb-4">
+        <div class="mb-3">
             <label class="form-label fw-semibold">Teléfono</label>
             <input type="text" name="telefono" class="form-control" placeholder="Ej: 5492236123456" required>
             <div class="form-text">Formato: código de país + número sin espacios ni +</div>
+        </div>
+        <div class="mb-4">
+            <label class="form-label fw-semibold">Dirección <span style="color:var(--muted);font-weight:400;">(opcional)</span></label>
+            <input type="text" name="direccion" class="form-control" placeholder="Ej: Av. Colón 1234">
         </div>
         <button type="submit" class="btn btn-success w-100">Guardar cliente</button>
     </form>

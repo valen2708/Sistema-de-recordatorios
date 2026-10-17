@@ -122,6 +122,26 @@ def init_db():
     """)
     conn.commit()
 
+    # Asegurar columna direccion en clientes
+    try:
+        if DATABASE_URL:
+            tiene = conn.execute("""
+                SELECT column_name FROM information_schema.columns
+                WHERE table_name = 'clientes' AND column_name = 'direccion'
+            """).fetchone()
+            if not tiene:
+                conn.execute("ALTER TABLE clientes ADD COLUMN direccion TEXT DEFAULT ''")
+                conn.commit()
+        else:
+            tiene = conn.execute(
+                "SELECT name FROM pragma_table_info('clientes') WHERE name = 'direccion'"
+            ).fetchone()
+            if not tiene:
+                conn.execute("ALTER TABLE clientes ADD COLUMN direccion TEXT DEFAULT ''")
+                conn.commit()
+    except Exception as e:
+        print(f"[init_db direccion] {e}")
+
     # Asegurar columna retirado en ventas
     try:
         if DATABASE_URL:

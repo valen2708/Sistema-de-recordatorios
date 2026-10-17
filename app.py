@@ -46,6 +46,17 @@ def dashboard():
     hoy = datetime.today().strftime("%Y-%m-%d")
     proximos_7 = (datetime.today() + timedelta(days=7)).strftime("%Y-%m-%d")
 
+    hace_30 = (datetime.today() - timedelta(days=30)).strftime("%Y-%m-%d")
+    sin_comprar = conn.execute("""
+        SELECT c.id, c.nombre, c.telefono, MAX(v.fecha_compra) as ultima_compra
+        FROM clientes c
+        LEFT JOIN ventas v ON v.cliente_id = c.id AND v.activo = 1
+        WHERE c.activo = 1
+        GROUP BY c.id, c.nombre, c.telefono
+        HAVING MAX(v.fecha_compra) < ? OR MAX(v.fecha_compra) IS NULL
+        ORDER BY ultima_compra ASC
+    """, (hace_30,)).fetchall()
+
     por_vencer_raw = conn.execute("""
         SELECT v.*, c.nombre, c.telefono
         FROM ventas v
@@ -71,7 +82,8 @@ def dashboard():
                            total_clientes=total_clientes,
                            total_recordatorios=total_recordatorios,
                            respondieron_si=respondieron_si,
-                           wa_status=wa_status)
+                           wa_status=wa_status,
+                           sin_comprar=sin_comprar)
 
 
 # ── CLIENTES ──────────────────────────────────────────────────────────────────
@@ -91,10 +103,11 @@ def nuevo_cliente():
     if request.method == "POST":
         nombre = request.form["nombre"].strip()
         telefono = request.form["telefono"].strip()
+        direccion = request.form.get("direccion", "").strip()
         conn = get_conn()
         conn.execute(
-            "INSERT INTO clientes (nombre, telefono) VALUES (?,?)",
-            (nombre, telefono)
+            "INSERT INTO clientes (nombre, telefono, direccion) VALUES (?,?,?)",
+            (nombre, telefono, direccion)
         )
         conn.commit()
         conn.close()
@@ -121,6 +134,31 @@ def historial_cliente(cid):
         dias = (datetime.strptime(v["fecha_vencimiento"], "%Y-%m-%d") - datetime.today()).days
         ventas.append({"v": v, "dias": dias})
     return render_template("historial_cliente.html", cliente=cliente, ventas=ventas)
+
+
+@app.route("/clientes/<int:cid>/editar", methods=["GET", "POST"])
+@login_required
+def editar_cliente(cid):
+    conn = get_conn()
+    cliente = conn.execute("SELECT * FROM clientes WHERE id = ? AND activo = 1", (cid,)).fetchone()
+    if not cliente:
+        conn.close()
+        flash("Cliente no encontrado.", "danger")
+        return redirect(url_for("clientes"))
+    if request.method == "POST":
+        nombre = request.form["nombre"].strip()
+        telefono = request.form["telefono"].strip()
+        direccion = request.form.get("direccion", "").strip()
+        conn.execute(
+            "UPDATE clientes SET nombre = ?, telefono = ?, direccion = ? WHERE id = ?",
+            (nombre, telefono, direccion, cid)
+        )
+        conn.commit()
+        conn.close()
+        flash(f"Cliente {nombre} actualizado.", "success")
+        return redirect(url_for("clientes"))
+    conn.close()
+    return render_template("editar_cliente.html", cliente=cliente)
 
 
 @app.route("/clientes/<int:cid>/eliminar", methods=["POST"])
