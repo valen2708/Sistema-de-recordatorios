@@ -348,11 +348,8 @@ def configuracion():
 
 # ── API ───────────────────────────────────────────────────────────────────────
 
-@app.route("/api/check-reminders", methods=["POST"])
+@app.route("/api/check-reminders", methods=["GET", "POST"])
 def check_reminders():
-    secret = os.environ.get("SCHEDULER_SECRET", "")
-    if not secret or request.form.get("secret") != secret:
-        return "Unauthorized", 401
     from scheduler import revisar_vencimientos
     revisar_vencimientos()
     return "OK", 200
