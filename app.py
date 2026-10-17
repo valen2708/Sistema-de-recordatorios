@@ -272,6 +272,20 @@ def toggle_retirado(vid):
     return redirect(ref)
 
 
+@app.route("/ventas/<int:vid>/editar-fecha", methods=["POST"])
+@login_required
+def editar_fecha_vencimiento(vid):
+    nueva_fecha = request.form.get("fecha_vencimiento", "").strip()
+    if nueva_fecha:
+        conn = get_conn()
+        conn.execute("UPDATE ventas SET fecha_vencimiento = ? WHERE id = ?", (nueva_fecha, vid))
+        conn.commit()
+        conn.close()
+        flash("Fecha de vencimiento actualizada.", "success")
+    ref = request.referrer or url_for("ventas")
+    return redirect(ref)
+
+
 @app.route("/ventas/<int:vid>/eliminar", methods=["POST"])
 @login_required
 def eliminar_venta(vid):
@@ -336,14 +350,17 @@ def recordatorios():
 def configuracion():
     if request.method == "POST":
         dias = request.form.get("dias_anticipacion", "1").strip()
+        mensaje = request.form.get("mensaje_template", "").strip()
         if dias.isdigit() and 1 <= int(dias) <= 7:
             set_config("dias_anticipacion", dias)
-            flash(f"Configuración guardada: recordatorios {dias} día(s) antes.", "success")
+            set_config("mensaje_template", mensaje)
+            flash("Configuración guardada.", "success")
         else:
             flash("Valor inválido. Ingresá un número entre 1 y 7.", "danger")
         return redirect(url_for("configuracion"))
     dias_actual = get_config("dias_anticipacion", "1")
-    return render_template("configuracion.html", dias_actual=dias_actual)
+    mensaje_actual = get_config("mensaje_template", "Hola {nombre}! 🐾\n\nMañana se termina el alimento *{alimento}* de tu mascota.\n\n¿Querés que te enviemos más?\nRespondé *SI* o *NO*")
+    return render_template("configuracion.html", dias_actual=dias_actual, mensaje_actual=mensaje_actual)
 
 
 # ── API ───────────────────────────────────────────────────────────────────────

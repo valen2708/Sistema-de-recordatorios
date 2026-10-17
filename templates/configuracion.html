@@ -4,35 +4,51 @@
     <h4 class="fw-bold mb-0"><i class="bi bi-gear me-2"></i>Configuración</h4>
 </div>
 
-<div class="row">
+<form method="POST">
+<div class="row g-4">
     <div class="col-md-6">
         <div class="card p-4">
             <h6 class="fw-semibold mb-3"><i class="bi bi-bell me-2 text-primary"></i>Recordatorios automáticos</h6>
-            <form method="POST">
-                <div class="mb-3">
-                    <label class="form-label">¿Con cuántos días de anticipación enviar el recordatorio?</label>
-                    <div class="d-flex align-items-center gap-3">
-                        <input type="number" name="dias_anticipacion" class="form-control" style="max-width:100px;"
-                            min="1" max="7" value="{{ dias_actual }}" required>
-                        <span class="text-muted">día(s) antes de que se termine el alimento</span>
-                    </div>
-                    <div class="form-text">Valor entre 1 y 7. El scheduler diario enviará recordatorios a los clientes cuyo alimento vence en exactamente ese plazo.</div>
+            <div class="mb-3">
+                <label class="form-label">¿Con cuántos días de anticipación enviar el recordatorio?</label>
+                <div class="d-flex align-items-center gap-3">
+                    <input type="number" name="dias_anticipacion" class="form-control" style="max-width:100px;"
+                        min="1" max="7" value="{{ dias_actual }}" required>
+                    <span style="color:var(--muted)">día(s) antes de que se termine el alimento</span>
                 </div>
-                <button type="submit" class="btn btn-primary"><i class="bi bi-check-circle me-1"></i>Guardar</button>
-            </form>
+                <div class="form-text">Valor entre 1 y 7.</div>
+            </div>
         </div>
     </div>
 
     <div class="col-md-6">
-        <div class="card p-4 h-100">
-            <h6 class="fw-semibold mb-3"><i class="bi bi-info-circle me-2 text-secondary"></i>Cómo funciona</h6>
-            <ul class="text-muted small mb-0" style="line-height:2;">
-                <li>Cada día a las 9:00 AM se ejecuta el recordatorio automático.</li>
-                <li>Busca todas las ventas cuya fecha de vencimiento sea exactamente <strong>N días</strong> desde hoy.</li>
-                <li>Envía un WhatsApp a cada cliente por esa venta (evita duplicados).</li>
-                <li>También podés enviar recordatorios manualmente desde la página de Ventas.</li>
-            </ul>
+        <div class="card p-4">
+            <h6 class="fw-semibold mb-3"><i class="bi bi-chat-dots me-2 text-primary"></i>Mensaje de WhatsApp</h6>
+            <div class="mb-3">
+                <label class="form-label">Template del mensaje</label>
+                <textarea name="mensaje_template" class="form-control" rows="6" style="font-size:13px;">{{ mensaje_actual }}</textarea>
+                <div class="form-text mt-2">
+                    Podés usar <code>{nombre}</code> y <code>{alimento}</code> como variables que se reemplazan automáticamente.<br>
+                    Ejemplo: <em>"Hola {nombre}, tu {alimento} se está por terminar!"</em>
+                </div>
+            </div>
         </div>
     </div>
+
+    <div class="col-12">
+        <button type="submit" class="btn btn-success"><i class="bi bi-check-circle me-1"></i>Guardar configuración</button>
+    </div>
+</div>
+</form>
+
+<div class="card p-4 mt-4">
+    <h6 class="fw-semibold mb-3"><i class="bi bi-info-circle me-2 text-secondary"></i>Cómo funciona</h6>
+    <ul style="color:var(--muted);font-size:13px;line-height:2;margin:0;">
+        <li>Cada día a las 9:00 AM se ejecuta el recordatorio automático.</li>
+        <li>Busca todas las ventas cuya fecha de vencimiento sea exactamente <strong>N días</strong> desde hoy.</li>
+        <li>Envía un WhatsApp a cada cliente usando el mensaje configurado arriba.</li>
+        <li>También podés enviar recordatorios manualmente desde la página de Ventas.</li>
+        <li>Podés editar la fecha de vencimiento de cada venta para adelantar o retrasar el recordatorio.</li>
+    </ul>
 </div>
 {% endblock %}

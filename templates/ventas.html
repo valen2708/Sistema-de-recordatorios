@@ -73,6 +73,10 @@
                                 {% if v.retirado %}<i class="bi bi-box-seam-fill"></i>{% else %}<i class="bi bi-box-seam"></i>{% endif %}
                             </button>
                         </form>
+                        <button class="btn btn-sm btn-outline-secondary" title="Editar fecha de vencimiento"
+                            onclick="abrirModalFecha({{ v.id }}, '{{ v.fecha_vencimiento }}')">
+                            <i class="bi bi-calendar-event"></i>
+                        </button>
                         <button class="btn btn-sm btn-success" title="Enviar recordatorio WhatsApp"
                             onclick="abrirModal({{ v.id }}, '{{ v.nombre }}', '{{ v.alimento }}', '{{ v.telefono }}')">
                             <i class="bi bi-whatsapp"></i>
@@ -90,6 +94,29 @@
         </table>
     </div>
 </div>
+{# Modal editar fecha #}
+<div class="modal fade" id="modalFecha" tabindex="-1">
+  <div class="modal-dialog modal-sm">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title"><i class="bi bi-calendar-event me-2"></i>Editar fecha de vencimiento</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <form method="POST" id="formFecha">
+        <div class="modal-body">
+          <label class="form-label">Nueva fecha de vencimiento</label>
+          <input type="date" name="fecha_vencimiento" id="input-fecha" class="form-control" required>
+          <div class="form-text mt-2">El recordatorio se enviará N días antes de esta fecha según tu configuración.</div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button>
+          <button type="submit" class="btn btn-success"><i class="bi bi-check-circle me-1"></i>Guardar</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
 {# Modal envío personalizado #}
 <div class="modal fade" id="modalEnviar" tabindex="-1">
   <div class="modal-dialog">
@@ -115,6 +142,12 @@
 </div>
 
 <script>
+function abrirModalFecha(vid, fechaActual) {
+    document.getElementById("formFecha").action = `/ventas/${vid}/editar-fecha`;
+    document.getElementById("input-fecha").value = fechaActual;
+    new bootstrap.Modal(document.getElementById("modalFecha")).show();
+}
+
 function abrirModal(vid, nombre, alimento, telefono) {
     document.getElementById("formEnviar").action = `/ventas/${vid}/enviar-recordatorio`;
     document.getElementById("modal-subtitulo").textContent = `Para: ${nombre} (${telefono})`;

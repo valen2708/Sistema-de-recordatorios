@@ -8,12 +8,11 @@ GREENAPI_URL = "https://api.green-api.com"
 
 
 def _armar_mensaje(nombre, alimento):
-    return (
-        f"Hola {nombre}! 🐾\n\n"
-        f"Mañana se termina el alimento *{alimento}* de tu mascota.\n\n"
-        f"¿Querés que te enviemos más?\n"
-        f"Respondé *SI* o *NO*"
-    )
+    from database import get_config
+    template = get_config("mensaje_template", "")
+    if not template:
+        template = "Hola {nombre}! 🐾\n\nMañana se termina el alimento *{alimento}* de tu mascota.\n\n¿Querés que te enviemos más?\nRespondé *SI* o *NO*"
+    return template.replace("{nombre}", nombre).replace("{alimento}", alimento)
 
 
 def enviar_mensaje_personalizado(telefono, mensaje):
