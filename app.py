@@ -423,10 +423,15 @@ def webhook():
 
         msg_data = data.get("messageData", {})
         tipo_msg = msg_data.get("typeMessage", "")
-        if tipo_msg != "textMessage":
-            return "OK", 200
+        print(f"[WEBHOOK] typeMessage={tipo_msg} data={data}")
 
-        texto = msg_data.get("textMessageData", {}).get("textMessage", "").strip().upper()
+        # Soportar textMessage y extendedTextMessage (cuando el cliente responde a un mensaje)
+        if tipo_msg == "textMessage":
+            texto = msg_data.get("textMessageData", {}).get("textMessage", "").strip().upper()
+        elif tipo_msg == "extendedTextMessage":
+            texto = msg_data.get("extendedTextMessageData", {}).get("text", "").strip().upper()
+        else:
+            return "OK", 200
         if texto not in ("SI", "NO", "SÍ"):
             return "OK", 200
 
