@@ -435,6 +435,7 @@ def webhook():
         # Obtener número del remitente
         sender = data.get("senderData", {}).get("chatId", "")
         telefono = sender.replace("@c.us", "").replace("@g.us", "")
+        print(f"[WEBHOOK] tipo={tipo} sender={sender} telefono={telefono} texto={texto}")
 
         conn = get_conn()
         # Buscar el recordatorio más reciente de ese teléfono sin respuesta
@@ -444,6 +445,7 @@ def webhook():
             WHERE c.telefono = ? AND r.respuesta IS NULL
             ORDER BY r.fecha_envio DESC LIMIT 1
         """, (telefono,)).fetchone()
+        print(f"[WEBHOOK] recordatorio encontrado: {rec}")
 
         if rec:
             conn.execute(
