@@ -410,6 +410,56 @@ def check_reminders():
     return "OK", 200
 
 
+@app.route("/webhook", methods=["POST"])
+def webhook():
+    try:
+        data = request.get_json(force=True)
+        if not data:
+            return "OK", 200
+
+        tipo = data.get("typeWebhook", "")
+        if tipo != "incomingMessageReceived":
+            return "OK", 200
+
+        msg_data = data.get("messageData", {})
+        tipo_msg = msg_data.get("typeMessage", "")
+        if tipo_msg != "textMessage":
+            return "OK", 200
+
+        texto = msg_data.get("textMessageData", {}).get("textMessage", "").strip().upper()
+        if texto not in ("SI", "NO", "SÍ"):
+            return "OK", 200
+
+        respuesta = "SI" if texto in ("SI", "SÍ") else "NO"
+
+        # Obtener número del remitente
+        sender = data.get("senderData", {}).get("chatId", "")
+        telefono = sender.replace("@c.us", "").replace("@g.us", "")
+
+        conn = get_conn()
+        # Buscar el recordatorio más reciente de ese teléfono sin respuesta
+        rec = conn.execute("""
+            SELECT r.id FROM recordatorios r
+            JOIN clientes c ON r.cliente_id = c.id
+            WHERE c.telefono = ? AND r.respuesta IS NULL
+            ORDER BY r.fecha_envio DESC LIMIT 1
+        """, (telefono,)).fetchone()
+
+        if rec:
+            conn.execute(
+                "UPDATE recordatorios SET respuesta = ?, fecha_respuesta = ? WHERE id = ?",
+                (respuesta, datetime.today().strftime("%Y-%m-%d"), rec["id"])
+            )
+            conn.commit()
+            print(f"[WEBHOOK] Respuesta '{respuesta}' de {telefono}")
+
+        conn.close()
+    except Exception as e:
+        print(f"[WEBHOOK] Error: {e}")
+
+    return "OK", 200
+
+
 if __name__ == "__main__":
     init_db()
     if not os.environ.get("DATABASE_URL"):
