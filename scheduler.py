@@ -27,11 +27,12 @@ def revisar_vencimientos():
             continue
 
         sid = enviar_recordatorio(v["nombre"], v["telefono"], v["alimento"], v["id"])
-        conn.execute(
-            "INSERT INTO recordatorios (venta_id, cliente_id, fecha_envio) VALUES (?, ?, ?)",
-            (v["id"], v["cliente_id"], datetime.today().strftime("%Y-%m-%d"))
-        )
-        conn.commit()
+        if sid != "simulado":
+            conn.execute(
+                "INSERT INTO recordatorios (venta_id, cliente_id, fecha_envio) VALUES (?, ?, ?)",
+                (v["id"], v["cliente_id"], datetime.today().strftime("%Y-%m-%d"))
+            )
+            conn.commit()
         print(f"Recordatorio enviado a {v['nombre']} - {sid}")
 
     conn.close()
