@@ -20,15 +20,10 @@
             <input type="text" name="alimento" class="form-control" placeholder="Ej: Royal Canin Adult 15kg" required>
         </div>
 
-        <div class="row g-3 mb-3">
-            <div class="col-6">
-                <label class="form-label fw-semibold">Kg comprados</label>
-                <input type="number" name="kg_comprados" class="form-control" step="0.5" min="0.5" placeholder="Ej: 15" required>
-            </div>
-            <div class="col-6">
-                <label class="form-label fw-semibold">Gramos por día</label>
-                <input type="number" name="gramos_por_dia" class="form-control" step="10" min="10" placeholder="Ej: 300" required>
-            </div>
+        <div class="mb-3">
+            <label class="form-label fw-semibold">Recordar cada cuántos días</label>
+            <input type="number" name="dias_recordatorio" class="form-control" step="1" min="1" placeholder="Ej: 30" required>
+            <div class="form-text">El recordatorio se enviará X días después de la fecha de compra.</div>
         </div>
 
         <div class="mb-4">

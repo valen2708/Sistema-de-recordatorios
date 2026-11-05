@@ -213,11 +213,11 @@ def nueva_venta():
     if request.method == "POST":
         cliente_id = request.form["cliente_id"]
         alimento = request.form["alimento"].strip()
-        kg = float(request.form["kg_comprados"])
+        dias = int(request.form["dias_recordatorio"])
         fecha = request.form["fecha_compra"]
-        gramos = float(request.form["gramos_por_dia"])
 
-        fecha_venc = calcular_fecha_vencimiento(fecha, kg, gramos)
+        from datetime import timedelta
+        fecha_venc = (datetime.strptime(fecha, "%Y-%m-%d") + timedelta(days=dias)).strftime("%Y-%m-%d")
 
         conn = get_conn()
         # Verificar que el cliente existe
@@ -229,11 +229,11 @@ def nueva_venta():
 
         conn.execute(
             "INSERT INTO ventas (cliente_id, alimento, kg_comprados, fecha_compra, gramos_por_dia, fecha_vencimiento) VALUES (?,?,?,?,?,?)",
-            (cliente_id, alimento, kg, fecha, gramos, fecha_venc)
+            (cliente_id, alimento, dias, fecha, dias, fecha_venc)
         )
         conn.commit()
         conn.close()
-        flash(f"Venta registrada para {cliente['nombre']}. El alimento se termina el {fecha_venc}.", "success")
+        flash(f"Venta registrada para {cliente['nombre']}. El recordatorio se enviará el {fecha_venc}.", "success")
         return redirect(url_for("ventas"))
 
     return render_template("nueva_venta.html")
