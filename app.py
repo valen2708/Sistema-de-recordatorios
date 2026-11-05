@@ -345,13 +345,8 @@ def enviar_recordatorio_manual(vid):
         WHERE v.id = ?
     """, (vid,)).fetchone()
     if v:
-        mensaje_custom = request.form.get("mensaje_custom", "").strip()
-        if mensaje_custom:
-            from whatsapp import enviar_mensaje_personalizado
-            sid = enviar_mensaje_personalizado(v["telefono"], mensaje_custom)
-        else:
-            from whatsapp import enviar_recordatorio
-            sid = enviar_recordatorio(v["nombre"], v["telefono"], v["alimento"], v["id"])
+        from whatsapp import enviar_recordatorio
+        sid = enviar_recordatorio(v["nombre"], v["telefono"], v["alimento"], v["id"])
         conn.execute(
             "INSERT INTO recordatorios (venta_id, cliente_id, fecha_envio) VALUES (?, ?, ?)",
             (v["id"], v["cliente_id"], datetime.today().strftime("%Y-%m-%d"))

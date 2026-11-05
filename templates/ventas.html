@@ -128,9 +128,7 @@
       <form method="POST" id="formEnviar">
         <div class="modal-body">
           <p class="text-muted mb-2" id="modal-subtitulo"></p>
-          <label class="form-label fw-semibold">Mensaje</label>
-          <textarea name="mensaje_custom" id="modal-mensaje" class="form-control" rows="6"></textarea>
-          <div class="form-text">Podés editar el mensaje antes de enviarlo.</div>
+          <p class="text-muted small">Se enviará el mensaje configurado en <a href="/configuracion">Configuración</a>.</p>
         </div>
         <div class="modal-footer">
           <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
@@ -151,8 +149,6 @@ function abrirModalFecha(vid, fechaActual) {
 function abrirModal(vid, nombre, alimento, telefono) {
     document.getElementById("formEnviar").action = `/ventas/${vid}/enviar-recordatorio`;
     document.getElementById("modal-subtitulo").textContent = `Para: ${nombre} (${telefono})`;
-    document.getElementById("modal-mensaje").value =
-        `Hola ${nombre}! 🐾\n\nMañana se termina el alimento *${alimento}* de tu mascota.\n\n¿Querés que te enviemos más?\nRespondé *SI* o *NO*`;
     new bootstrap.Modal(document.getElementById("modalEnviar")).show();
 }
 
