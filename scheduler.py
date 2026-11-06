@@ -32,6 +32,13 @@ def revisar_vencimientos():
                 "INSERT INTO recordatorios (venta_id, cliente_id, fecha_envio) VALUES (?, ?, ?)",
                 (v["id"], v["cliente_id"], datetime.today().strftime("%Y-%m-%d"))
             )
+            # Renovar fecha de vencimiento: hoy + kg_comprados días (kg_comprados guarda los días del ciclo)
+            dias_ciclo = int(v["kg_comprados"])
+            nueva_fecha = (datetime.today() + timedelta(days=dias_ciclo)).strftime("%Y-%m-%d")
+            conn.execute(
+                "UPDATE ventas SET fecha_vencimiento = ? WHERE id = ?",
+                (nueva_fecha, v["id"])
+            )
             conn.commit()
         print(f"Recordatorio enviado a {v['nombre']} - {sid}")
 
