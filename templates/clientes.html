@@ -5,6 +5,10 @@
     <a href="/clientes/nuevo" class="btn btn-success"><i class="bi bi-plus-circle me-1"></i>Nuevo cliente</a>
 </div>
 
+<div class="mb-3">
+    <input type="text" id="filtro-clientes" class="form-control" style="max-width:320px;" placeholder="🔍 Buscar por nombre o teléfono...">
+</div>
+
 <div class="card">
     <div class="table-responsive">
         <table class="table table-hover align-middle mb-0">
@@ -46,4 +50,14 @@
         </table>
     </div>
 </div>
+
+<script>
+const filtro = document.getElementById("filtro-clientes");
+filtro.addEventListener("input", () => {
+    const q = filtro.value.toLowerCase();
+    document.querySelectorAll("tbody tr").forEach(fila => {
+        fila.style.display = fila.textContent.toLowerCase().includes(q) ? "" : "none";
+    });
+});
+</script>
 {% endblock %}
