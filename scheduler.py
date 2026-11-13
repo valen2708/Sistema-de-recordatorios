@@ -48,6 +48,9 @@ def revisar_vencimientos():
 def iniciar_scheduler():
     from apscheduler.schedulers.background import BackgroundScheduler
     scheduler = BackgroundScheduler()
-    scheduler.add_job(revisar_vencimientos, "cron", hour=9, minute=0)
+    # Revisar cada 30 minutos mientras la app esté activa
+    scheduler.add_job(revisar_vencimientos, "interval", minutes=30)
     scheduler.start()
+    # Revisar inmediatamente al arrancar
+    revisar_vencimientos()
     return scheduler
