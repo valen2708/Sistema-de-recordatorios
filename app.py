@@ -464,6 +464,5 @@ def webhook():
 
 if __name__ == "__main__":
     init_db()
-    if not os.environ.get("DATABASE_URL"):
-        iniciar_scheduler()
+    iniciar_scheduler()
     app.run(debug=True, port=5000)
