@@ -5,10 +5,12 @@ from whatsapp import enviar_recordatorio
 
 
 def revisar_vencimientos():
-    # Solo mandar mensajes entre las 8 y las 13hs (horario Argentina)
-    hora_actual = datetime.now().hour
+    # Solo mandar mensajes entre las 8 y las 13hs (horario Argentina, UTC-3)
+    from datetime import timezone, timedelta as td
+    tz_argentina = timezone(td(hours=-3))
+    hora_actual = datetime.now(tz_argentina).hour
     if hora_actual < 8 or hora_actual >= 13:
-        print(f"[scheduler] Fuera de horario ({hora_actual}hs), no se envían mensajes.")
+        print(f"[scheduler] Fuera de horario ({hora_actual}hs Argentina), no se envían mensajes.")
         return
 
     from database import get_config
